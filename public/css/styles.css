@@ -574,3 +574,142 @@ td.row { margin-top: 0; }
   button, .tab { font-size: var(--text-sm); }
   .pgr-hero-title { font-size: var(--text-xl); }
 }
+
+/* ================================================== ui-integration layer
+ * OWNED BY THE INTEGRATION AGENT. Appended only - nothing above this
+ * marker is renamed, reordered or edited, because other modules build
+ * DOM against those exact selectors and custom property names.
+ *
+ * Everything here is built from the same tokens as the rest of the file:
+ * no literal colour, no gradient, no shadow beyond --shadow-xs/sm. The
+ * variation panel differentiates main line / alternative / off book by
+ * FILL WEIGHT and BORDER STYLE, never by hue, which is the same
+ * monochrome marker language docs/DESIGN.md sets out for the board
+ * markers and the mastery tiles.
+ * ================================================== */
+
+/* ---------------------------------------------------------- topbar brand */
+
+a.brand { text-decoration: none; }
+a.brand:hover h1 { text-decoration: underline; text-underline-offset: 3px; }
+img.brand-mark { width: 30px; height: 30px; flex: 0 0 auto; }
+
+/* ------------------------------------------------------- variation panel */
+
+.var-card { display: flex; flex-direction: column; gap: var(--space-3); box-shadow: var(--shadow-xs); }
+.var-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.var-header h2 { margin: 0; }
+.var-position {
+  margin: 4px 0 0; font: var(--text-sm)/1.35 var(--mono); color: var(--text);
+  overflow-wrap: anywhere;
+}
+.var-count { flex: 0 0 auto; white-space: nowrap; }
+.var-intro { margin: 0; }
+.var-controls { display: flex; flex-direction: column; gap: var(--space-2); }
+.var-controls .form-row { margin-bottom: 0; }
+.var-plans { margin: 0; padding-top: var(--space-3); border-top: 1px solid var(--line); }
+
+.varlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+
+.var-item {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--space-3); background: var(--card);
+  border: 1px solid var(--line); border-left-width: 3px; border-left-color: var(--line);
+  border-radius: var(--radius-md);
+}
+.var-item.is-main { border-left-color: var(--text); }
+.var-item.is-book { border-left-color: var(--muted); }
+.var-item.is-novelty { border-left-style: dashed; border-left-color: var(--muted); }
+.var-item:hover { border-color: var(--muted); border-left-color: var(--text); }
+.var-item.is-selected { border-color: var(--text); background: var(--bg-input); }
+
+.var-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.var-san { font: 700 var(--text-lg)/1.2 var(--mono); letter-spacing: -0.01em; }
+.var-name { font-size: var(--text-base); font-weight: 500; overflow-wrap: anywhere; }
+.var-badge {
+  margin-left: auto; flex: 0 0 auto; white-space: nowrap;
+  font: 600 var(--text-xs)/1 var(--font-sans); letter-spacing: .03em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: var(--radius-full);
+  border: 1px solid var(--line); background: var(--card); color: var(--muted);
+}
+.var-badge.is-main { background: var(--text); border-color: var(--text); color: var(--background); }
+.var-badge.is-book { border-color: var(--muted); color: var(--text); }
+.var-badge.is-novelty { border-style: dashed; border-color: var(--muted); color: var(--muted); }
+
+.var-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.var-metabit { font: var(--text-xs)/1.4 var(--mono); color: var(--muted); }
+.var-metabit + .var-metabit::before { content: "/ "; }
+
+.var-line {
+  margin: 0; font: var(--text-sm)/1.5 var(--mono); color: var(--text);
+  background: var(--bg-input); border-radius: var(--radius-sm);
+  padding: 6px 8px; overflow-wrap: anywhere;
+}
+.var-why { margin: 0; font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--muted); }
+.var-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: 2px; }
+
+/* --------------------------------------------------------------- Learn */
+
+.subhead {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-xs); font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+}
+.bullets { list-style: disc; margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: 6px; }
+.bullets li { font-size: var(--text-sm); line-height: var(--leading-relaxed); }
+
+.lessonlist { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.lesson-item {
+  display: flex; flex-direction: column; gap: 6px; padding: var(--space-3);
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md);
+  border-left-width: 3px; border-left-color: var(--line);
+}
+.lesson-item:hover { border-color: var(--muted); }
+/* mastery by fill weight, not hue - matches .pgr-mastery-tile */
+.lesson-item[data-mastery="started"] { border-left-color: var(--muted); }
+.lesson-item[data-mastery="practicing"] { border-left-style: dashed; border-left-color: var(--text); }
+.lesson-item[data-mastery="mastered"] { border-left-color: var(--text); }
+.lesson-head { display: flex; align-items: baseline; gap: var(--space-2); }
+.lesson-title { font-weight: 600; font-size: var(--text-md); }
+.lesson-head .chip { margin-left: auto; flex: 0 0 auto; }
+.lesson-meta { margin: 0; font: var(--text-xs)/1.4 var(--mono); color: var(--muted); }
+.lesson-summary { margin: 0; font-size: var(--text-sm); line-height: var(--leading-relaxed); color: var(--muted); }
+.lesson-why {
+  margin: 0; font-size: var(--text-sm); line-height: var(--leading-relaxed);
+  padding-left: var(--space-3); border-left: 2px solid var(--line);
+}
+.lesson-item .row { margin-top: 2px; }
+
+.lesson-runner {
+  margin-top: var(--space-4); padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+/* ------------------------------------------------------------- Library
+ * mountImport/mountLibrary append several sibling .card elements straight
+ * into their container, so the container needs the same column rhythm the
+ * .panel gives its own children. */
+
+.imp-root, .lib-root { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* ---------------------------------------------------------- onboarding */
+
+.onb-backdrop {
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4); background: rgb(255 255 255 / 0.82);
+}
+
+/* --------------------------------------------------------- responsive */
+
+@media (max-width: 480px) {
+  .var-san { font-size: var(--text-md); }
+  .var-badge { margin-left: 0; }
+  .var-item { padding: var(--space-2); }
+
+  /* Seven tabs will not fit on a phone. The base rule scrolls them
+   * sideways, which hides Progress and Profile behind a gesture nothing
+   * signposts, so on small screens they wrap onto a second row instead. */
+  #main-tabs { flex-wrap: wrap; overflow-x: visible; }
+  #main-tabs .tab { padding: 8px 10px; }
+}

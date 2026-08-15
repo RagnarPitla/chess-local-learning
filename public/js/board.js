@@ -58,7 +58,13 @@ export class Board {
     return this.setOrientation(this.orientation === COLOR.white ? 'b' : 'w', true)
   }
 
+  // cm-chessboard throws "moveInput already enabled" if enableMoveInput is
+  // called twice without an intervening disable. Every original caller
+  // happened to disable first, so the sharp edge was invisible until a new
+  // caller did not. Disabling first makes a repeat enable - including a
+  // switch to the other colour - a no-op rather than a crash.
   enableInput(colour) {
+    if (this.inputColour !== null) this.board.disableMoveInput()
     this.inputColour = colour
     this.board.enableMoveInput((event) => this._onInput(event), colour === 'b' ? COLOR.black : COLOR.white)
   }

@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chess Local Learning</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9822;</text></svg>">
+<title>Ramify - chess training built from your own games</title>
+<meta name="description" content="Ramify turns your own games into your chess curriculum: Stockfish finds the real mistakes, a coach names the pattern, and the variation panel shows every reply available from the position in front of you.">
+<link rel="icon" href="/assets/brand/favicon.svg">
 <link rel="stylesheet" href="/vendor/cm-chessboard/assets/chessboard.css">
 <link rel="stylesheet" href="/css/styles.css">
 <script type="importmap">
@@ -20,13 +21,13 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">
-    <span class="brand-mark">&#9822;</span>
+  <a class="brand" href="/" aria-label="Ramify home">
+    <img class="brand-mark" src="/assets/brand/favicon.svg" alt="" width="30" height="30">
     <div>
-      <h1>Chess Local Learning</h1>
-      <p class="tagline">Principles over memorisation. Your mistakes become your curriculum.</p>
+      <h1>Ramify</h1>
+      <p class="tagline">Principles over memorisation. Your games become your curriculum.</p>
     </div>
-  </div>
+  </a>
   <div class="pills">
     <span class="pill" id="pill-engine" data-state="pending">engine: loading</span>
     <span class="pill" id="pill-coach" data-state="pending">coach: checking</span>
@@ -55,11 +56,14 @@
   </section>
 
   <section class="side-col">
-    <nav class="tabs" role="tablist">
-      <button class="tab is-active" data-tab="play" role="tab">Play</button>
-      <button class="tab" data-tab="review" role="tab">Review</button>
-      <button class="tab" data-tab="drills" role="tab">Drills</button>
-      <button class="tab" data-tab="profile" role="tab">Profile</button>
+    <nav class="tabs" id="main-tabs" role="tablist" aria-label="Trainer sections">
+      <button class="tab is-active" data-tab="play" role="tab" aria-selected="true" aria-controls="panel-play">Play</button>
+      <button class="tab" data-tab="learn" role="tab" aria-selected="false" aria-controls="panel-learn">Learn</button>
+      <button class="tab" data-tab="review" role="tab" aria-selected="false" aria-controls="panel-review">Review</button>
+      <button class="tab" data-tab="drills" role="tab" aria-selected="false" aria-controls="panel-drills">Drills</button>
+      <button class="tab" data-tab="library" role="tab" aria-selected="false" aria-controls="panel-library">Library</button>
+      <button class="tab" data-tab="progress" role="tab" aria-selected="false" aria-controls="panel-progress">Progress</button>
+      <button class="tab" data-tab="profile" role="tab" aria-selected="false" aria-controls="panel-profile">Profile</button>
     </nav>
 
     <!-- ---------------------------------------------------------- PLAY -->
@@ -87,6 +91,44 @@
         <button id="btn-new" class="primary wide" type="button">Start game</button>
       </div>
 
+      <!-- ----------------------------------------------- VARIATION PANEL -->
+      <section class="card var-card" id="variation-card" aria-labelledby="variation-heading">
+        <div class="var-header">
+          <div>
+            <h2 id="variation-heading">Variations from this position</h2>
+            <p class="var-position" id="variation-position">Starting position</p>
+          </div>
+          <span class="chip var-count" id="variation-count">5 lines</span>
+        </div>
+
+        <p class="muted small var-intro">
+          Lessons teach one line. Opponents play anything. This is the live branching
+          structure of the position in front of you: what you can play, where each move
+          leads, and why you would choose it.
+        </p>
+
+        <div class="var-controls">
+          <div class="form-row">
+            <label for="sel-variation-level">Training level</label>
+            <select id="sel-variation-level">
+              <option value="beginner">Beginner - 3 variations</option>
+              <option value="intermediate" selected>Intermediate - 5 variations</option>
+              <option value="advanced">Advanced - 7 variations</option>
+              <option value="expert">Expert - 9 variations</option>
+            </select>
+          </div>
+          <p class="muted small" id="variation-level-blurb"></p>
+          <label class="checkline small" for="chk-variation-all">
+            <input type="checkbox" id="chk-variation-all">
+            Show every legal move instead of the training set
+          </label>
+        </div>
+
+        <ul class="varlist" id="variation-list"></ul>
+        <p class="muted small hidden" id="variation-empty">No legal moves from this position - the game is over.</p>
+        <p class="muted small var-plans hidden" id="variation-plans"></p>
+      </section>
+
       <div class="card alert hidden" id="deviation-card">
         <h2>Out of theory <span class="chip" id="deviation-chip"></span></h2>
         <div class="prose" id="deviation-text">Analysing.</div>
@@ -101,6 +143,60 @@
       <div class="card hidden" id="hint-card">
         <h2>Hint</h2>
         <div class="prose" id="hint-text"></div>
+      </div>
+    </div>
+
+    <!-- --------------------------------------------------------- LEARN -->
+    <div class="panel" id="panel-learn" role="tabpanel">
+      <div class="card" id="learn-browse-card">
+        <h2>Learn <span class="chip" id="learn-stats">-</span></h2>
+        <p class="muted small">
+          Lessons built around ideas you can reuse in any position, not move orders you
+          have to remember. Pick a track, read the idea, then play the position on the board.
+        </p>
+        <div class="form-row">
+          <label for="sel-track">Track</label>
+          <select id="sel-track"></select>
+        </div>
+        <p class="muted small" id="learn-track-blurb"></p>
+        <ul class="lessonlist" id="lesson-list"></ul>
+      </div>
+
+      <div class="card hidden" id="learn-lesson-card">
+        <div class="chiprow">
+          <span class="chip" id="learn-lesson-track"></span>
+          <span class="chip" id="learn-lesson-level"></span>
+          <span class="chip" id="learn-lesson-progress"></span>
+        </div>
+        <h3 id="learn-lesson-title"></h3>
+        <p id="learn-lesson-summary"></p>
+
+        <h4 class="subhead">Key ideas</h4>
+        <ul class="bullets" id="learn-ideas"></ul>
+
+        <div class="lesson-runner" id="learn-runner">
+          <div class="chiprow">
+            <span class="chip" id="learn-pos-counter"></span>
+            <span class="chip" id="learn-pos-side"></span>
+          </div>
+          <p id="learn-prompt"></p>
+          <div class="verdict hidden" id="learn-verdict"></div>
+          <div class="prose hidden" id="learn-explain"></div>
+          <div class="row">
+            <button class="ghost" id="btn-learn-answer" type="button">Show the answer</button>
+            <button class="primary" id="btn-learn-next" type="button">Next position</button>
+          </div>
+        </div>
+
+        <h4 class="subhead">Common pitfalls</h4>
+        <ul class="bullets" id="learn-pitfalls"></ul>
+
+        <h4 class="subhead hidden" id="learn-next-head">Go on to</h4>
+        <div class="row" id="learn-next-row"></div>
+
+        <div class="row">
+          <button class="ghost" id="btn-learn-back" type="button">Back to all lessons</button>
+        </div>
       </div>
     </div>
 
@@ -123,7 +219,7 @@
 
       <div class="card">
         <h2>Import a game</h2>
-        <p class="muted small">Paste a PGN from Lichess, Chess.com or anywhere else to review a real game.</p>
+        <p class="muted small">Paste a PGN from Lichess, Chess.com or anywhere else to review a real game. For whole histories, use the Library tab.</p>
         <textarea id="pgn-input" rows="4" placeholder="1. e4 e5 2. Nf3 Nc6 ..."></textarea>
         <div class="form-row">
           <label for="sel-pgn-colour">I played as</label>
@@ -182,6 +278,25 @@
       </div>
     </div>
 
+    <!-- -------------------------------------------------------- LIBRARY -->
+    <div class="panel" id="panel-library" role="tabpanel">
+      <div class="card">
+        <h2>Your games</h2>
+        <p class="muted small">
+          Drop a PGN export, or pull your history straight from Lichess or Chess.com.
+          Everything stays in this browser. Send any game to the reviewer and it becomes
+          drills and evidence for your weakness profile.
+        </p>
+      </div>
+      <div id="import-mount"></div>
+      <div id="library-mount"></div>
+    </div>
+
+    <!-- ------------------------------------------------------- PROGRESS -->
+    <div class="panel" id="panel-progress" role="tabpanel">
+      <div id="progress-mount"></div>
+    </div>
+
     <!-- -------------------------------------------------------- PROFILE -->
     <div class="panel" id="panel-profile" role="tabpanel">
       <div class="card">
@@ -212,6 +327,10 @@
     </div>
   </section>
 </main>
+
+<div class="onb-backdrop hidden" id="onboarding-backdrop">
+  <div id="onboarding-mount"></div>
+</div>
 
 <script type="module" src="/js/app.js"></script>
 </body>
