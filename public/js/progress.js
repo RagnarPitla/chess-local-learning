@@ -22,6 +22,7 @@
  */
 import { PATTERN_LIBRARY } from './patterns.js'
 import { normaliseProfile, rankWeaknesses, dueDrills, LEITNER_INTERVALS_DAYS } from './profile.js'
+import { lessonById } from './lessons.js'
 
 export const PROGRESS_VERSION = 1
 const DAY_MS = 86400000
@@ -178,7 +179,35 @@ export function recordLessonEvent(state, { lessonId, positionId, correct, at } =
   if (!lessonId) return next
   const when = safeDate(at)
   const nowIso = when.toISOString()
-  const posKey = positionId === undefined || positionId === null || positionId === '' ? '_lesson' : String(positionId)
+
+  // Resolve positionId against the lesson's real positions so the writer
+  // and every reader (rollupLessons, lessonStatus) always agree on the
+  // key used: an exact canonical match (see lessonPositionIds - the fen,
+  // for the shipped curriculum) or a plain array index both normalise to
+  // the SAME key. A positionId that matches neither is rejected - loudly,
+  // via console.warn - rather than silently stored somewhere no reader
+  // will ever count towards progress.
+  let posKey = '_lesson'
+  if (positionId !== undefined && positionId !== null && positionId !== '') {
+    let lesson = null
+    try {
+      lesson = lessonById(lessonId)
+    } catch {
+      lesson = null
+    }
+    const resolved = resolvePositionKey(lesson, positionId)
+    if (resolved.checked && !resolved.ok) {
+      const count = lessonPositionIds(lesson)?.length ?? 0
+      console.warn(
+        `recordLessonEvent: positionId ${JSON.stringify(positionId)} is not a real position in lesson "${lessonId}" ` +
+          `(it has ${count} position${count === 1 ? '' : 's'}) and is not a valid index into it - ignoring this event ` +
+          'instead of recording progress that curriculumProgress/trackProgress could never count. Pass the position ' +
+          'canonical id (its fen for the shipped curriculum) or its array index instead.'
+      )
+      return next
+    }
+    posKey = resolved.key
+  }
 
   const lessons = { ...next.lessons }
   const existingLesson = lessons[lessonId]
@@ -203,13 +232,31 @@ export function recordLessonEvent(state, { lessonId, positionId, correct, at } =
   return next
 }
 
-/** Per-lesson status from recorded evidence alone (no lesson content is
- * consulted here, so "total"/"completed" describe positions the student has
- * actually attempted, not the lesson's full length - see trackProgress /
- * curriculumProgress for a rollup that knows the true lesson size). */
+/** Per-lesson status. When lessonId resolves to a real lesson (lessons.js),
+ * this defers to rollupLessons so the total/correct/pct/completed here are
+ * computed by the exact same code path as trackProgress/curriculumProgress
+ * - they can never disagree for a lesson that exists in the curriculum.
+ * For an id lessons.js does not know (e.g. a synthetic/test lesson), this
+ * falls back to the raw recorded positions alone, same as before. */
 export function lessonStatus(state, lessonId) {
   const p = normaliseProgress(state)
-  const rec = lessonId ? p.lessons[lessonId] : null
+  if (!lessonId) {
+    return { started: false, completed: false, correct: 0, total: 0, pct: 0, mastery: 'unseen', lastSeen: null }
+  }
+
+  let lesson = null
+  try {
+    lesson = lessonById(lessonId)
+  } catch {
+    lesson = null
+  }
+  if (lesson) {
+    const item = rollupLessons(state, [lesson]).lessons[0]
+    if (!item) return { started: false, completed: false, correct: 0, total: 0, pct: 0, mastery: 'unseen', lastSeen: null }
+    return { started: item.started, completed: item.completed, correct: item.correct, total: item.total, pct: item.pct, mastery: lessonMasteryOf(item), lastSeen: item.lastSeen }
+  }
+
+  const rec = p.lessons[lessonId]
   if (!rec) {
     return { started: false, completed: false, correct: 0, total: 0, pct: 0, mastery: 'unseen', lastSeen: null }
   }
@@ -219,12 +266,16 @@ export function lessonStatus(state, lessonId) {
   const pct = total ? Math.round((correct / total) * 100) : 0
   const started = total > 0
   const completed = started && correct === total
-  let mastery
-  if (!started) mastery = 'unseen'
-  else if (completed) mastery = 'mastered'
-  else if (pct >= 50) mastery = 'practicing'
-  else mastery = 'started'
-  return { started, completed, correct, total, pct, mastery, lastSeen: rec.lastSeen || null }
+  return { started, completed, correct, total, pct, mastery: lessonMasteryOf({ started, completed, pct }), lastSeen: rec.lastSeen || null }
+}
+
+/** Single shared rule for the started/practicing/mastered/unseen label so
+ * lessonStatus's two branches (and nothing else) can ever disagree on it. */
+function lessonMasteryOf({ started, completed, pct }) {
+  if (!started) return 'unseen'
+  if (completed) return 'mastered'
+  if (pct >= 50) return 'practicing'
+  return 'started'
 }
 
 /* --------------------------------------------------------- lesson adapter */
@@ -270,6 +321,26 @@ function lessonPositionCount(lesson) {
   if (arr) return Math.max(1, arr.length)
   const n = Number(lesson?.positionCount ?? lesson?.stepCount)
   return Number.isFinite(n) && n > 0 ? n : 1
+}
+
+/** The one rule for turning whatever positionId a caller passes into the
+ * canonical key rollupLessons (and therefore trackProgress/curriculumProgress)
+ * will actually count: an exact match against lessonPositionIds, or a plain
+ * array index into that same list. `checked:false` means the lesson's real
+ * positions could not be determined at all (unknown lessonId, or a lesson
+ * with no discoverable positions array) - there is nothing to validate
+ * against, so the raw id is accepted as-is, same as before this existed.
+ * `checked:true, ok:false` means the lesson IS known and positionId matches
+ * none of its real positions - the caller must not be allowed to store that
+ * silently, since nothing would ever count it. */
+function resolvePositionKey(lesson, rawPositionId) {
+  const canonical = lessonPositionIds(lesson)
+  const raw = String(rawPositionId)
+  if (!canonical || !canonical.length) return { key: raw, ok: true, checked: false }
+  if (canonical.includes(raw)) return { key: raw, ok: true, checked: true }
+  const idx = Number(raw)
+  if (Number.isInteger(idx) && idx >= 0 && idx < canonical.length) return { key: canonical[idx], ok: true, checked: true }
+  return { key: raw, ok: false, checked: true }
 }
 
 function findLessonForPattern(lessons, patternId) {
