@@ -171,6 +171,10 @@ persists to the server, and the console is clean.
 
 `npm run test:e2e -- --headful` to watch it happen.
 
+The app exposes a small handle on `window.chessCoach` (`newGame`, `playSan`, `loadPgnGame`,
+`runReview`, `state`) so you can drive it from the browser console. The end to end suite uses the
+same handle rather than faking mouse drags.
+
 ---
 
 ## Data and privacy
