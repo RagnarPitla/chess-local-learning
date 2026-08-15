@@ -211,7 +211,14 @@ function createStats() {
   const files = [];
   return {
     files,
-    record(filePath, size) {
+    record(filePath, size, replace = false) {
+      if (replace) {
+        const existing = files.find((f) => f.path === filePath);
+        if (existing) {
+          existing.size = size;
+          return;
+        }
+      }
       files.push({ path: filePath, size });
     },
     total() {
@@ -326,13 +333,57 @@ async function runBuild({ base }) {
   await fsp.writeFile(path.join(DIST_DIR, '.nojekyll'), '');
   stats.record(path.join(DIST_DIR, '.nojekyll'), 0);
 
-  // 6. 404.html - identical app shell, so a hard refresh on any client-side
-  //    route (or any typo'd path) still boots the app instead of hitting a
-  //    host's bare 404 page. Reuses the ALREADY base-rewritten index.html
-  //    output so the two are byte-identical.
-  const finalIndexHtml = await fsp.readFile(path.join(DIST_DIR, 'index.html'), 'utf8');
-  await fsp.writeFile(path.join(DIST_DIR, '404.html'), finalIndexHtml);
-  stats.record(path.join(DIST_DIR, '404.html'), Buffer.byteLength(finalIndexHtml, 'utf8'));
+  // 6. Site routing. In development, server.js serves public/ directly, so
+  //    the app sits at / and the marketing page at /landing.html - the
+  //    convenient shape while building. A published site needs the opposite:
+  //    a visitor arriving at the bare domain should get the explanation, not
+  //    an unlabelled chessboard. So the deploy artifact is reshaped here:
+  //
+  //      /            -> the landing page  (was landing.html)
+  //      /app/        -> the trainer       (was index.html)
+  //      /landing.html -> kept as an alias so older links still resolve
+  //
+  //    Every asset reference in both documents is root-absolute and has
+  //    already been base-rewritten above, so moving the documents does not
+  //    move their assets. The only thing that must change is the landing
+  //    page's own relative call-to-action links, which point at ./index.html
+  //    and would otherwise point at the landing page itself.
+  const appShellHtml = await fsp.readFile(path.join(DIST_DIR, 'index.html'), 'utf8');
+  const landingSrc = path.join(DIST_DIR, 'landing.html');
+  let rootHtml = appShellHtml;
+
+  if (existsSync(landingSrc)) {
+    await fsp.mkdir(path.join(DIST_DIR, 'app'), { recursive: true });
+    await fsp.writeFile(path.join(DIST_DIR, 'app', 'index.html'), appShellHtml);
+    stats.record(path.join(DIST_DIR, 'app', 'index.html'), Buffer.byteLength(appShellHtml, 'utf8'));
+
+    const landingHtml = await fsp.readFile(landingSrc, 'utf8');
+    const before = countAppLinks(landingHtml);
+    rootHtml = rewriteLandingAppLinks(landingHtml, base);
+    const after = countAppLinks(rootHtml);
+    if (before === 0) {
+      throw new Error(
+        'landing.html has no ./index.html call-to-action link - the app would be unreachable ' +
+          'from the published home page',
+      );
+    }
+    if (after !== 0) {
+      throw new Error(`landing.html still has ${after} unrewritten ./index.html link(s)`);
+    }
+    await fsp.writeFile(path.join(DIST_DIR, 'index.html'), rootHtml);
+    stats.record(path.join(DIST_DIR, 'index.html'), Buffer.byteLength(rootHtml, 'utf8'), true);
+    await fsp.writeFile(landingSrc, rootHtml);
+    stats.record(landingSrc, Buffer.byteLength(rootHtml, 'utf8'), true);
+    console.log(`  routing      : / -> landing, /app/ -> trainer (${before} CTA link(s) rewritten)`);
+  } else {
+    console.log('  routing      : no landing.html found - app served at / (development shape)');
+  }
+
+  // 7. 404.html - the app shell, so a hard refresh on any client-side route
+  //    (or any typo'd path) still boots the app instead of hitting a host's
+  //    bare 404 page. Reuses the ALREADY base-rewritten output.
+  await fsp.writeFile(path.join(DIST_DIR, '404.html'), appShellHtml);
+  stats.record(path.join(DIST_DIR, '404.html'), Buffer.byteLength(appShellHtml, 'utf8'));
 
   const total = stats.total();
   if (total > TOTAL_DIST_MAX_BYTES) {
@@ -387,10 +438,33 @@ function extractAttrRefs(html) {
 // site was built for. Returns null if the URL is not a resolvable local path
 // (external, protocol-relative, or - critically - missing the expected base
 // prefix, which is exactly the kind of build bug this check exists to catch).
-function resolveSiteUrlToFile(urlPath, base) {
-  if (typeof urlPath !== 'string' || !urlPath.startsWith('/') || urlPath.startsWith('//')) return null;
+function resolveSiteUrlToFile(urlPath, base, fromDir = null) {
+  if (typeof urlPath !== 'string' || urlPath.length === 0) return null;
+  if (urlPath.startsWith('//') || urlPath.includes('://')) return null;
+  if (!urlPath.startsWith('/')) {
+    // Document-relative reference. Only resolvable when the caller says which
+    // document it came from, and must not escape the artifact.
+    if (!fromDir) return null;
+    const resolved = path.resolve(fromDir, urlPath.split('#')[0].split('?')[0]);
+    return resolved.startsWith(DIST_DIR) ? resolved : null;
+  }
   if (!urlPath.startsWith(base)) return null;
   return path.join(DIST_DIR, urlPath.slice(base.length));
+}
+
+// The landing page's call-to-action links are written as ./index.html so the
+// development server (public/ served flat, app at /) works with no build step.
+// In the deploy artifact the landing page IS index.html, so those links must
+// be retargeted at the relocated app or they would loop back to the landing.
+const LANDING_APP_LINK_RE = /(\bhref\s*=\s*")\.\/index\.html(#[^"]*)?(")/g;
+
+function countAppLinks(html) {
+  return (html.match(LANDING_APP_LINK_RE) || []).length;
+}
+
+function rewriteLandingAppLinks(html, base) {
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  return html.replace(LANDING_APP_LINK_RE, (_m, open, hash, close) => `${open}${prefix}app/${hash || ''}${close}`);
 }
 
 async function findOversizedFiles(dir) {
@@ -444,24 +518,34 @@ async function runCheck({ base }) {
     if (!cond) problems.push(label);
   };
 
+  // The published shape puts the landing page at /index.html and the trainer
+  // at /app/index.html. Fall back to /index.html when no landing page was
+  // present, which is the development shape.
+  const relocatedApp = path.join(DIST_DIR, 'app', 'index.html');
+  const appShellPath = existsSync(relocatedApp) ? relocatedApp : path.join(DIST_DIR, 'index.html');
+  const appShellLabel = path.relative(DIST_DIR, appShellPath);
   const indexPath = path.join(DIST_DIR, 'index.html');
+
   check('index.html present', existsSync(indexPath));
   check('.nojekyll present', existsSync(path.join(DIST_DIR, '.nojekyll')));
   check('404.html present', existsSync(path.join(DIST_DIR, '404.html')));
+  check(`app shell present at ${appShellLabel}`, existsSync(appShellPath));
 
-  if (existsSync(indexPath)) {
-    const html = await fsp.readFile(indexPath, 'utf8');
+  const checkHtmlRefs = async (filePath, label, { requireImportMap }) => {
+    const html = await fsp.readFile(filePath, 'utf8');
 
-    const importMap = extractImportMap(html);
-    check('import map block present and parses as JSON', Boolean(importMap));
-    if (importMap?.imports) {
-      for (const [specifier, target] of Object.entries(importMap.imports)) {
-        const resolved = resolveSiteUrlToFile(target, base);
-        check(
-          `import map "${specifier}" -> ${target}`,
-          Boolean(resolved) && existsSync(resolved),
-          resolved ? path.relative(DIST_DIR, resolved) : 'could not resolve against base',
-        );
+    if (requireImportMap) {
+      const importMap = extractImportMap(html);
+      check('import map block present and parses as JSON', Boolean(importMap));
+      if (importMap?.imports) {
+        for (const [specifier, target] of Object.entries(importMap.imports)) {
+          const resolved = resolveSiteUrlToFile(target, base);
+          check(
+            `import map "${specifier}" -> ${target}`,
+            Boolean(resolved) && existsSync(resolved),
+            resolved ? path.relative(DIST_DIR, resolved) : 'could not resolve against base',
+          );
+        }
       }
     }
 
@@ -469,14 +553,33 @@ async function runCheck({ base }) {
     for (const [attr, value] of extractAttrRefs(html)) {
       if (value.startsWith('data:')) continue;
       attrCount += 1;
-      const resolved = resolveSiteUrlToFile(value, base);
+      const resolved = resolveSiteUrlToFile(value, base, path.dirname(filePath));
       check(
-        `${attr}="${value}" resolves to a real file`,
+        `${label} ${attr}="${value}" resolves to a real file`,
         Boolean(resolved) && existsSync(resolved),
         resolved ? path.relative(DIST_DIR, resolved) : 'could not resolve against base',
       );
     }
-    check('index.html has at least one local href/src reference', attrCount > 0);
+    check(`${label} has at least one local href/src reference`, attrCount > 0);
+    return html;
+  };
+
+  if (existsSync(appShellPath)) {
+    await checkHtmlRefs(appShellPath, appShellLabel, { requireImportMap: true });
+  }
+
+  if (existsSync(relocatedApp) && existsSync(indexPath)) {
+    const landingHtml = await checkHtmlRefs(indexPath, 'index.html (landing)', { requireImportMap: false });
+    const appHref = base.endsWith('/') ? `${base}app/` : `${base}/app/`;
+    check(
+      'landing page links to the trainer at /app/',
+      landingHtml.includes(`href="${appHref}"`),
+      appHref,
+    );
+    check(
+      'landing page no longer self-links via ./index.html',
+      countAppLinks(landingHtml) === 0,
+    );
   }
 
   for (const name of STOCKFISH_ALLOWLIST) {

@@ -85,11 +85,18 @@ async function handle(req, res) {
     }
   }
 
-  const rel = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '')
+  // Route parity with the deploy artifact produced by scripts/build-static.mjs:
+  //   /      -> the landing page, so a first-time visitor gets the explanation
+  //   /app/  -> the trainer (falls through to the SPA fallback below)
+  // Keeping dev and prod identical here means a link written in one works in
+  // the other. Falls back to the app when no landing page exists.
+  const isRoot = pathname === '/'
+  const rootDoc = (await isFile(path.join(PUBLIC_DIR, 'landing.html'))) ? 'landing.html' : 'index.html'
+  const rel = isRoot ? rootDoc : pathname.replace(/^\/+/, '')
   const file = safeJoin(PUBLIC_DIR, rel)
   if (file && (await isFile(file))) return serveFile(req, res, file)
 
-  // SPA fallback so deep links keep working.
+  // SPA fallback so deep links - including /app/ - keep working.
   if (!path.extname(rel)) return serveFile(req, res, path.join(PUBLIC_DIR, 'index.html'))
   return sendText(res, 404, 'Not found')
 }

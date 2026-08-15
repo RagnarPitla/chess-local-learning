@@ -20,7 +20,10 @@ import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const APP_PORT = Number(process.env.SMOKE_PORT || 5199)
-const APP_URL = `http://127.0.0.1:${APP_PORT}/`
+const ORIGIN = `http://127.0.0.1:${APP_PORT}/`
+// The trainer lives at /app/ in both dev and the deploy artifact; / is the
+// landing page. See the route-parity note in server.js.
+const APP_URL = `${ORIGIN}app/`
 const HEADFUL = process.argv.includes('--headful')
 
 const CHROME_CANDIDATES = [
@@ -192,7 +195,7 @@ async function main() {
   let cdp
 
   try {
-    const health = await waitForHttp(`${APP_URL}api/health`, 15000)
+    const health = await waitForHttp(`${ORIGIN}api/health`, 15000)
     record('server boots and reports health', health.ok === true, `engine ${health.engine.build}`)
 
     chrome = spawn(
@@ -346,7 +349,7 @@ async function main() {
     const weaknessRows = await cdp.eval(() => document.querySelectorAll('#weakness-list li').length)
     record('profile tab renders weaknesses', weaknessRows > 0, `${weaknessRows} rows`)
 
-    const stored = await (await fetch(`${APP_URL}api/profile`)).json()
+    const stored = await (await fetch(`${ORIGIN}api/profile`)).json()
     record('profile survives to the server', stored.ok && stored.profile?.gamesPlayed >= 1)
 
     /* 7. nothing broke along the way */
