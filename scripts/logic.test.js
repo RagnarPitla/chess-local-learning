@@ -672,3 +672,95 @@ test('normaliseProfile repairs anything missing or corrupt', () => {
   assert.ok(Array.isArray(partial.history))
   assert.equal(partial.puzzles.attempted, 0)
 })
+
+/* ------------------------------------------- profile purity (regression) */
+
+/**
+ * recordGame and recordDrill read as pure: profile in, new profile out. They
+ * were not. normaliseProfile shallow-copied, so the pattern entries were shared
+ * with the caller's profile and every call mutated its own input.
+ *
+ * The damage was asymmetric, which is what made it worth pinning. gamesPlayed
+ * is a primitive so it was copied correctly, but the pattern counters were
+ * shared. A discarded call therefore inflated the error counts without
+ * inflating the game count, and the weakness ranking that chooses the
+ * student's lessons was computed from the corrupted figure.
+ */
+const purityGame = () => ({
+  result: '1-0',
+  playerColour: 'w',
+  opening: 'Test Opening',
+  summary: { acpl: 40, accuracy: 80, counts: { blunder: 1, mistake: 0, inaccuracy: 2 } },
+  patternSummary: [{ id: 'hanging-piece', label: 'hanging piece', count: 2, cost: 300, examples: [{ ply: 12 }] }],
+})
+
+test('recordGame leaves its input profile untouched', () => {
+  const before = emptyProfile()
+  const snapshot = JSON.stringify(before)
+  const after = recordGame(before, purityGame())
+
+  assert.equal(JSON.stringify(before), snapshot, 'input profile was mutated')
+  assert.equal(before.gamesPlayed, 0)
+  assert.equal(before.history.length, 0)
+  assert.deepEqual(Object.keys(before.patterns), [])
+  assert.equal(after.gamesPlayed, 1, 'the returned profile should carry the change')
+  assert.notEqual(before.patterns, after.patterns, 'patterns map must not be shared')
+  assert.notEqual(before.history, after.history, 'history array must not be shared')
+})
+
+test('a discarded recordGame does not leak counts into the next one', () => {
+  const profile = emptyProfile()
+  recordGame(profile, purityGame()) // caller computes a preview and throws it away
+  const real = recordGame(profile, purityGame())
+
+  assert.equal(real.gamesPlayed, 1)
+  assert.equal(real.patterns['hanging-piece'].count, 2, 'the discarded call leaked its pattern count')
+  assert.equal(real.patterns['hanging-piece'].games, 1)
+  assert.equal(real.history.length, 1)
+})
+
+test('recordDrill leaves its input profile untouched', () => {
+  const profile = recordGame(emptyProfile(), purityGame())
+  const snapshot = JSON.stringify(profile)
+  const after = recordDrill(profile, 'hanging-piece', true)
+
+  assert.equal(JSON.stringify(profile), snapshot, 'input profile was mutated')
+  assert.equal(profile.puzzles.attempted, 0)
+  assert.equal(after.puzzles.attempted, 1, 'the returned profile should carry the change')
+  assert.notEqual(profile.puzzles, after.puzzles, 'puzzles object must not be shared')
+})
+
+test('chaining still accumulates, so the copy did not break recording', () => {
+  let p = emptyProfile()
+  p = recordGame(p, purityGame())
+  p = recordGame(p, purityGame())
+  p = recordGame(p, purityGame())
+
+  assert.equal(p.gamesPlayed, 3)
+  assert.equal(p.patterns['hanging-piece'].count, 6, '2 per game across 3 games')
+  assert.equal(p.patterns['hanging-piece'].games, 3)
+  assert.equal(p.history.length, 3)
+
+  // Leitner promotion has to survive the copy too, or drills never graduate.
+  let d = p
+  const boxes = []
+  for (let i = 0; i < 4; i += 1) {
+    d = recordDrill(d, 'hanging-piece', true)
+    boxes.push(d.patterns['hanging-piece'].box)
+  }
+  assert.deepEqual(boxes, [2, 3, 4, 5], 'box should climb one per correct answer')
+  assert.equal(d.patterns['hanging-piece'].attempts, 4)
+  assert.equal(d.patterns['hanging-piece'].correct, 4)
+  assert.equal(d.puzzles.solved, 4)
+
+  const wrong = recordDrill(d, 'hanging-piece', false)
+  assert.equal(wrong.patterns['hanging-piece'].box, 1, 'a miss should drop straight back to box 1')
+})
+
+test('examples arrays are not shared between a profile and its copy', () => {
+  const p = recordGame(emptyProfile(), purityGame())
+  const copy = normaliseProfile(p)
+  assert.notEqual(p.patterns['hanging-piece'].examples, copy.patterns['hanging-piece'].examples)
+  copy.patterns['hanging-piece'].examples.push({ ply: 99 })
+  assert.equal(p.patterns['hanging-piece'].examples.length, 1, 'the original grew a phantom example')
+})

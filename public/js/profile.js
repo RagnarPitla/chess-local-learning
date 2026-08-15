@@ -25,15 +25,32 @@ export function emptyProfile() {
   }
 }
 
+/**
+ * Copy a raw profile into a known-good shape.
+ *
+ * This returns a defensive copy all the way down to each pattern entry. The
+ * record* functions read as pure - they take a profile and return a new one -
+ * so a caller is entitled to compute a result and throw it away. With a shallow
+ * copy the entries were shared, and a discarded call still leaked its counts
+ * into the original while leaving gamesPlayed behind, which quietly inflated
+ * the weakness ranking that picks the student's lessons.
+ */
 export function normaliseProfile(raw) {
   const base = emptyProfile()
   if (!raw || typeof raw !== 'object') return base
+  const patterns = {}
+  if (raw.patterns && typeof raw.patterns === 'object') {
+    for (const [id, entry] of Object.entries(raw.patterns)) {
+      if (!entry || typeof entry !== 'object') continue
+      patterns[id] = { ...entry, examples: Array.isArray(entry.examples) ? entry.examples.map((ex) => ({ ...ex })) : [] }
+    }
+  }
   return {
     ...base,
     ...raw,
-    patterns: raw.patterns && typeof raw.patterns === 'object' ? raw.patterns : {},
-    history: Array.isArray(raw.history) ? raw.history : [],
-    puzzles: raw.puzzles && typeof raw.puzzles === 'object' ? raw.puzzles : base.puzzles,
+    patterns,
+    history: Array.isArray(raw.history) ? raw.history.map((h) => ({ ...h })) : [],
+    puzzles: raw.puzzles && typeof raw.puzzles === 'object' ? { ...base.puzzles, ...raw.puzzles } : base.puzzles,
   }
 }
 
