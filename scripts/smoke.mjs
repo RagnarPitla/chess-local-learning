@@ -352,7 +352,134 @@ async function main() {
     const stored = await (await fetch(`${ORIGIN}api/profile`)).json()
     record('profile survives to the server', stored.ok && stored.profile?.gamesPlayed >= 1)
 
-    /* 7. nothing broke along the way */
+    /* 7. saved games library persists to a real IndexedDB.
+       library.js (public/js/library.js) is entirely IndexedDB-backed and has
+       no in-memory fallback, so this can only be exercised in a real browser
+       - node --test covers its graceful-degradation path (no indexedDB
+       global) but never its actual CRUD, which is the point of this block. */
+    const library = await cdp.eval(async () => {
+      const lib = await import('/js/library.js')
+      await lib.clearLibrary()
+      const gameA = {
+        id: 'smoke-game-a',
+        pgn: '[Event "Smoke A"]\n[White "Ana"]\n[Black "Bao"]\n[Result "1-0"]\n\n1. e4 e5 2. Nf3 Nc6 1-0',
+        moves: ['e4', 'e5', 'Nf3', 'Nc6'],
+        headers: { Event: 'Smoke A' },
+        white: 'Ana',
+        black: 'Bao',
+        result: '1-0',
+        date: '2024-01-01',
+        eco: 'C50',
+        opening: 'Italian Game',
+        source: 'file',
+        colour: 'w',
+      }
+      const gameB = {
+        id: 'smoke-game-b',
+        pgn: '[Event "Smoke B"]\n[White "Cy"]\n[Black "Dee"]\n[Result "0-1"]\n\n1. d4 d5 0-1',
+        moves: ['d4', 'd5'],
+        headers: { Event: 'Smoke B' },
+        white: 'Cy',
+        black: 'Dee',
+        result: '0-1',
+        date: '2024-02-01',
+        eco: 'D00',
+        opening: 'Queens Pawn Game',
+        source: 'file',
+        colour: 'b',
+      }
+      const addResult = await lib.addGames([gameA, gameB])
+      // Re-adding the same id must dedupe, not double-write - this is the
+      // exact path a re-import of an already-saved game takes in the app.
+      const dupeResult = await lib.addGames([gameA])
+      const listed = await lib.listGames({ sort: 'date-asc' })
+      const fetched = await lib.getGame('smoke-game-a')
+      const reviewed = await lib.saveReview('smoke-game-a', { acpl: 42 })
+      const stats = await lib.libraryStats()
+      const exportedBlob = await lib.exportLibrary()
+      const exportedText = await exportedBlob.text()
+      await lib.deleteGame('smoke-game-b')
+      const afterDelete = await lib.listGames()
+      await lib.clearLibrary()
+      const afterClear = await lib.listGames()
+      return {
+        addResult,
+        dupeResult,
+        listedIds: listed.map((g) => g.id),
+        fetchedWhite: fetched?.white,
+        reviewedAcpl: reviewed?.review?.acpl,
+        reviewedFlag: reviewed?.reviewedFlag,
+        stats,
+        exportedText,
+        afterDeleteIds: afterDelete.map((g) => g.id),
+        afterClearCount: afterClear.length,
+      }
+    })
+    record(
+      'library.addGames writes both real games to IndexedDB',
+      library.addResult.added === 2 && library.addResult.duplicates === 0,
+      JSON.stringify(library.addResult),
+    )
+    record(
+      'library.addGames dedupes a re-added game by stable id instead of double-writing it',
+      library.dupeResult.added === 0 && library.dupeResult.duplicates === 1,
+      JSON.stringify(library.dupeResult),
+    )
+    record(
+      'library.listGames returns both saved games sorted by date',
+      JSON.stringify(library.listedIds) === JSON.stringify(['smoke-game-a', 'smoke-game-b']),
+      library.listedIds.join(', '),
+    )
+    record('library.getGame fetches a single saved game by id', library.fetchedWhite === 'Ana', library.fetchedWhite)
+    record(
+      'library.saveReview attaches a review and flips reviewedFlag',
+      library.reviewedAcpl === 42 && library.reviewedFlag === 1,
+      JSON.stringify({ acpl: library.reviewedAcpl, flag: library.reviewedFlag }),
+    )
+    record(
+      'library.libraryStats reports the right total and result split',
+      library.stats.total === 2 && library.stats.byResult['1-0'] === 1 && library.stats.byResult['0-1'] === 1,
+      JSON.stringify(library.stats),
+    )
+    record(
+      'library.exportLibrary produces a PGN blob containing both saved games',
+      library.exportedText.includes('Smoke A') && library.exportedText.includes('Smoke B'),
+      `${library.exportedText.length} chars`,
+    )
+    record(
+      'library.deleteGame removes exactly the targeted game and keeps the other',
+      JSON.stringify(library.afterDeleteIds) === JSON.stringify(['smoke-game-a']),
+      library.afterDeleteIds.join(', '),
+    )
+    record('library.clearLibrary empties the store entirely', library.afterClearCount === 0, String(library.afterClearCount))
+
+    /* 8. dark mode: an OS/browser dark preference must never invert either
+       page. This is a real-browser check of the exact historical defect
+       described in the project brief (an automatic prefers-color-scheme
+       block turned the app dark while the landing page stayed light) -
+       scripts/theme.test.js asserts no such CSS rule exists in the source;
+       this asserts the RENDERED result under a forced dark preference,
+       which would also catch a regression introduced via inline styles or
+       JS rather than a stylesheet. */
+    await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] })
+    const appBgUnderDarkPreference = await cdp.eval(() => getComputedStyle(document.body).backgroundColor)
+    record(
+      'the app keeps its light background under an emulated OS dark preference',
+      appBgUnderDarkPreference === 'rgb(255, 255, 255)',
+      appBgUnderDarkPreference,
+    )
+
+    await cdp.send('Page.navigate', { url: ORIGIN })
+    await cdp.waitFor(() => document.readyState === 'complete', { timeout: 20000, label: 'landing page load' })
+    const landingBgUnderDarkPreference = await cdp.eval(() => getComputedStyle(document.body).backgroundColor)
+    record(
+      'the landing page also keeps its light background under the same emulated dark preference',
+      landingBgUnderDarkPreference === 'rgb(255, 255, 255)',
+      landingBgUnderDarkPreference,
+    )
+    await cdp.send('Emulation.setEmulatedMedia', { features: [] })
+
+    /* 9. nothing broke along the way */
     const noise = [...cdp.consoleErrors, ...cdp.pageErrors].filter(
       (m) => !/favicon|lichess|net::ERR_INTERNET|Failed to load resource: the server responded with a status of 404/i.test(m),
     )

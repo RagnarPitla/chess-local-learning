@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test \"scripts/logic.test.js\"",
+    "test": "node --test \"scripts/*.test.js\"",
     "test:e2e": "node scripts/smoke.mjs",
     "test:all": "npm test && npm run test:e2e",
     "build": "node scripts/build-static.mjs",
