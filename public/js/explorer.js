@@ -394,6 +394,32 @@ function scoreCandidate(candidate, level) {
   return score
 }
 
+/**
+ * Principle tags are bare noun labels, which fit some sentences and not
+ * others. "illustrates development" reads fine; "that also development" does
+ * not. Rendering them through a noun form and a verb form keeps both
+ * sentences grammatical for every tag rather than forcing one to bend.
+ */
+const PRINCIPLE_NOUNS = {
+  'king safety': 'king safety',
+  development: 'development',
+  centre: 'centre control',
+}
+const PRINCIPLE_VERBS = {
+  'king safety': 'gets the king safe',
+  development: 'develops a piece',
+  centre: 'fights for the centre',
+}
+
+function joinPhrases(list) {
+  if (list.length <= 1) return list[0] || ''
+  if (list.length === 2) return `${list[0]} and ${list[1]}`
+  return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
+}
+
+const asNouns = (tags) => joinPhrases(tags.map((t) => PRINCIPLE_NOUNS[t] ?? t))
+const asVerbs = (tags) => joinPhrases(tags.map((t) => PRINCIPLE_VERBS[t] ?? t))
+
 /** `toppedUp` is true only when the book had SOME candidates but ran out
  * before reaching the requested count - as opposed to the position being
  * out of book from the very first move considered, which keeps its original
@@ -401,7 +427,7 @@ function scoreCandidate(candidate, level) {
 function explainWhy(candidate, level, toppedUp = false) {
   if (!candidate.entry.isBook) {
     const reason = candidate.principles.length
-      ? `it clearly illustrates ${candidate.principles.join(' and ')}`
+      ? `it clearly illustrates ${asNouns(candidate.principles)}`
       : 'it is a reasonable try worth judging on its own merits'
     return toppedUp
       ? `Theory runs out before this move - it is included so you have a full set to train on - but ${reason}, so it is worth thinking through.`
@@ -422,7 +448,7 @@ function explainWhy(candidate, level, toppedUp = false) {
     return `A calm, principled alternative that clearly ${which} - a solid choice while the ideas are still new.`
   }
   if (candidate.principles.length) {
-    return `A known alternative that also ${candidate.principles.join(' and ')}, and leads to a different structure worth recognising.`
+    return `A known alternative that also ${asVerbs(candidate.principles)}, and leads to a different structure worth recognising.`
   }
   return 'A known alternative that leads to a different structure, worth recognising so you are not surprised by it.'
 }

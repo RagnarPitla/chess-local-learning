@@ -4,7 +4,6 @@
 the principles behind the moves and shows you the live variation fan instead
 of a memorised line, so you still have a plan the moment theory runs out.**
 
-[![CI](https://github.com/RagnarPitla/chess-local-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/RagnarPitla/chess-local-learning/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/RagnarPitla/chess-local-learning/actions/workflows/pages.yml/badge.svg)](https://github.com/RagnarPitla/chess-local-learning/actions/workflows/pages.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
@@ -74,8 +73,8 @@ npm start
 `npm ci` rather than `npm install`: it installs straight from
 `package-lock.json`, which is what a fresh clone should use. This project
 has exactly three runtime dependencies and no dev dependencies, so
-`npm install` works too, but `npm ci` is what CI uses and what was verified
-here.
+`npm install` works too, but `npm ci` installs exactly what the lockfile
+pins, which is what a fresh clone should use and what was verified here.
 
 That's the whole setup: no bundler, no database, no API key. The first load
 fetches the ~7 MB Stockfish WASM engine from your own server and caches it.

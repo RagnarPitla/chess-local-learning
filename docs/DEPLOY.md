@@ -12,7 +12,7 @@ will see.
 
 | Host | LLM coach | Cost | Notes |
 | --- | --- | --- | --- |
-| GitHub Pages | Offline coach or user's own key only | Free | No serverless functions; simplest, matches the repo's own CI |
+| GitHub Pages | Offline coach or user's own key only | Free | No serverless functions; simplest, and what this repo already uses |
 | Cloudflare Pages | Full server-side coach | Free tier | Runs `functions/api/coach.js` |
 | Vercel | Full server-side coach | Free tier | Runs `api/coach.js` |
 

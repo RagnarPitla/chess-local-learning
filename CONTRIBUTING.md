@@ -9,14 +9,36 @@ a change.
 
 ```bash
 npm ci
-npm test           # layer 1: unit tests
-npm run test:e2e   # layer 2: end-to-end, real Chrome
+npm test            # layer 1: unit tests
+npm run test:e2e    # layer 2: end-to-end, real Chrome
 npm run build:check # layer 3: deploy safety net (run after npm run build)
-npm run test:all   # layers 1 + 2
+npm run test:all    # layers 1 + 2
 ```
 
-**Layer 1 - unit tests** (`node --test scripts/logic.test.js`, currently
-51 tests). Pure logic only: evaluation maths (`public/js/analysis.js`),
+Or run every gate in one go, exactly as the scheduled local job does:
+
+```bash
+npm run ci:local        # all four gates, ~3 minutes (the browser gate dominates)
+npm run ci:local:quick  # unit tests and build only, a few seconds
+```
+
+There is no hosted test runner. Verification happens on the machine making
+the change, which keeps the feedback loop local and means a fork does not
+inherit a CI configuration it cannot run. To have it run on a schedule:
+
+```bash
+npm run ci:cron:install   # hourly by default; records node's path for cron
+npm run ci:cron:status    # show the entry and the last result
+npm run ci:cron:remove
+```
+
+Results land in `.local-ci/` (gitignored): a dated log plus
+`last-run.json` summarising each gate. The cron entry runs the quick gates
+only, because cron cannot reliably launch Chrome on a locked or logged-out
+macOS session; run `npm run ci:local` yourself for the browser gates.
+
+**Layer 1 - unit tests** (`node --test scripts/*.test.js`, currently
+147 tests). Pure logic only: evaluation maths (`public/js/analysis.js`),
 pattern detection (`public/js/patterns.js`), the opening book
 (`public/js/openings.js`), the weakness profile and spaced repetition
 (`public/js/profile.js`), and drill generation (`public/js/puzzles.js`).
@@ -56,7 +78,7 @@ review as an external contributor too. Before opening a PR:
 
 - **Keep it to one area.** A lesson-content PR should touch
   `public/data/lessons-data.js` (and maybe `public/js/lessons.js` if the
-  shape genuinely needs to change) - not the engine, the board, or CI.
+  shape genuinely needs to change) - not the engine, the board, or the build scripts.
   An opening-line PR touches the curated `BOOK` array in
   `public/js/openings.js` - not the generated `public/data/openings-data.js`
   (see below).
