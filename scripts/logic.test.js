@@ -41,6 +41,7 @@ import {
 import {
   describeDeviation,
   lookupOpening,
+  openingTreeStats,
   outOfBookPly,
   positionBrief,
   shouldFlagDeviation,
@@ -335,7 +336,18 @@ test('summarisePatterns counts and costs each weakness', () => {
   assert.equal(summary[0].examples.length, 2, 'examples are kept so lessons can quote your own moves')
 })
 
-/* --------------------------------------------------------------- openings */
+/* --------------------------------------------------------------- openings
+ * The book used to be roughly 35 hand-written lines. It is now the full
+ * Lichess ECO tree compiled at build time: 3,810 named lines over 8,653
+ * positions. That changed what "unknown" means. ECO A00 covers every
+ * irregular opening, so all twenty legal first moves now name something -
+ * a3 is Anderssen's Opening, Na3 is the Sodium Attack, h3 is the Clemenz.
+ * Two assertions below used a3 as a stand-in for "not in the book" and
+ * legitimately started failing when the book learned it. They are rewritten
+ * against a move the book genuinely does not contain rather than relaxed,
+ * because the property being tested - that a name is never invented - still
+ * matters.
+ */
 
 test('lookupOpening names a known line', () => {
   assert.equal(lookupOpening(['e4', 'e5', 'Nf3', 'Nc6', 'Bb5']).name, 'Ruy Lopez')
@@ -344,7 +356,16 @@ test('lookupOpening names a known line', () => {
     lookupOpening(['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'a6']).name,
     'Sicilian Najdorf',
   )
-  assert.equal(lookupOpening(['a3', 'h6']), null, 'unknown lines are not invented')
+  assert.equal(lookupOpening(['Ke2']), null, 'unknown lines are not invented')
+  assert.equal(lookupOpening([]), null, 'no moves means no opening')
+})
+
+test('the full book knows the irregular openings too', () => {
+  assert.equal(lookupOpening(['a3']).name, "Anderssen's Opening")
+  assert.equal(lookupOpening(['Na3']).name, 'Sodium Attack')
+  const stats = openingTreeStats()
+  assert.ok(stats.openings > 3000, `expected a full book, got ${stats.openings} lines`)
+  assert.ok(stats.positions > stats.openings, 'positions index should be larger than the line count')
 })
 
 test('a book entry carries plans, not just a name', () => {
@@ -363,7 +384,8 @@ test('lookupOpening returns the longest match, not the first', () => {
 test('outOfBookPly reports where theory stops', () => {
   assert.equal(outOfBookPly(['e4', 'e5', 'Nf3', 'Nc6', 'Bb5']), null, 'still inside the Ruy Lopez')
   assert.equal(outOfBookPly(['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'Qf6']), 5, 'Black leaves book on ply 5')
-  assert.equal(outOfBookPly(['a3', 'h6']), 0, 'nothing was ever in book')
+  assert.equal(outOfBookPly(['Ke2']), 0, 'nothing was ever in book')
+  assert.equal(outOfBookPly(['a3', 'h6']), 1, 'a3 is a real line, so the book only runs out on ply 1')
 })
 
 test('shouldFlagDeviation only fires when the opponent leaves book late enough', () => {
