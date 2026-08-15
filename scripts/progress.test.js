@@ -207,7 +207,22 @@ test('recording by array index resolves to the same key as recording by fen, so 
   let byIndex = createProgressState()
   byIndex = recordLessonEvent(byIndex, { lessonId: lesson.id, positionId: 0, correct: true })
 
-  assert.deepEqual(lessonStatus(byFen, lesson.id), lessonStatus(byIndex, lesson.id))
+  // lastSeen is stamped at call time, so the two writes disagree by a
+  // millisecond whenever they straddle a tick. Comparing it would make this
+  // test fail at random, which is worse than not testing it: a scheduled job
+  // that goes red for no reason teaches you to ignore it. Compare the
+  // resolution behaviour this test is actually about, then check lastSeen
+  // for the property that matters - that both writes recorded one at all.
+  const fen = lessonStatus(byFen, lesson.id)
+  const index = lessonStatus(byIndex, lesson.id)
+
+  const { lastSeen: fenSeen, ...fenRest } = fen
+  const { lastSeen: indexSeen, ...indexRest } = index
+  assert.deepEqual(fenRest, indexRest)
+
+  assert.ok(Number.isFinite(Date.parse(fenSeen)), 'recording by fen should stamp a valid lastSeen')
+  assert.ok(Number.isFinite(Date.parse(indexSeen)), 'recording by index should stamp a valid lastSeen')
+  assert.ok(Math.abs(Date.parse(fenSeen) - Date.parse(indexSeen)) < 5000, 'both writes happened in this test run')
 })
 
 test('a positionId that matches neither the fen nor an index for a real lesson never silently counts', () => {
