@@ -58,17 +58,26 @@ function pluralise(count, noun) {
   return `${count} ${noun}${count === 1 ? '' : 's'}`
 }
 
-/** Turn one ranked weakness entry into a sentence citing the student's own evidence. */
+/**
+ * Turn one ranked weakness entry into a sentence citing the student's own evidence.
+ *
+ * Pattern labels come in two grammatical shapes - verb phrases like
+ * "allowed a fork" and noun phrases like "piece with no squares" - so any
+ * template that leads with a verb ("you have shown X") reads as broken English
+ * for half of them. Naming the pattern in quotes and letting it sit as the
+ * subject works for both, and matches how the Progress tab already refers to
+ * patterns.
+ */
 function describeWeakness(entry) {
   const label = (entry.meta?.label || entry.label || entry.id).toLowerCase()
   const clauses = []
 
   if (entry.games) {
-    clauses.push(`you have shown ${label} in ${pluralise(entry.games, 'reviewed game')}`)
+    clauses.push(`"${label}" showed up in ${pluralise(entry.games, 'reviewed game')}`)
   } else if (entry.count) {
-    clauses.push(`${label} has come up ${pluralise(entry.count, 'time')} in your games`)
+    clauses.push(`"${label}" has come up ${pluralise(entry.count, 'time')} in your games`)
   } else {
-    clauses.push(`${label} is your highest-priority tracked weakness right now`)
+    clauses.push(`"${label}" is your highest-priority tracked weakness right now`)
   }
 
   if (typeof entry.accuracy === 'number') {
@@ -78,7 +87,8 @@ function describeWeakness(entry) {
   }
 
   const sentence = clauses.join(', ') + '.'
-  return sentence.charAt(0).toUpperCase() + sentence.slice(1)
+  // Capitalise the first letter, not the opening quote mark.
+  return sentence.replace(/[a-z]/, (c) => c.toUpperCase())
 }
 
 /** A sensible beginner path used whenever there is no usable weakness evidence yet. */
