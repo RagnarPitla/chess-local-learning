@@ -713,3 +713,21 @@ img.brand-mark { width: 30px; height: 30px; flex: 0 0 auto; }
   #main-tabs { flex-wrap: wrap; overflow-x: visible; }
   #main-tabs .tab { padding: 8px 10px; }
 }
+
+/* ====== ui-integration layer: end-of-theory divider =====================
+ * Separates real opening theory from the moves explorer.js adds once the book
+ * runs out (isBook:false). A hairline rule and a label, no colour - the
+ * distinction has to be legible, not decorative. */
+.var-divider {
+  display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap;
+  margin: var(--space-2) 0 0; padding-top: var(--space-3);
+  border-top: 1px dashed var(--line);
+}
+.var-divider-label {
+  flex: 0 0 auto;
+  font: 600 var(--text-xs)/1 var(--font-sans);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text);
+}
+.var-divider-note {
+  font: var(--text-xs)/1.4 var(--font-sans); color: var(--muted);
+}

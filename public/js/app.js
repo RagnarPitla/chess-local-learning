@@ -1140,46 +1140,10 @@ async function updateVariations() {
 
   const entries = state.variationShowAll
     ? full.moves
-    : topUp(trainingVariations({ sanMoves, level, count }), full, count)
+    : trainingVariations({ sanMoves, level, count })
 
   state.variations = entries
   renderVariations(entries, full)
-}
-
-/* Integration-layer top-up.
- *
- * trainingVariations only ever offers what the opening book knows while the
- * game is still in book, so a thin book node (1.e4 d6 has just four named
- * continuations) returns four lines at intermediate, advanced AND expert -
- * which makes the difficulty selector look broken exactly where a student is
- * most likely to touch it. The book is explorer.js's business, not mine, so
- * rather than change it the panel tops the set up from the legal moves that
- * explore() already returned, badged honestly as off-book.
- *
- * Order is deliberate teaching order rather than the alphabetical order the
- * explorer returns: forcing moves first (checks, then captures), then king
- * safety, then development and the centre. */
-function topUp(entries, full, count) {
-  if (entries.length >= count) return entries
-  const chosen = new Set(entries.map((e) => e.san))
-  const extra = full.moves
-    .filter((m) => !chosen.has(m.san))
-    .map((m) => ({ ...m, beyondBook: true, whyThisOne: explainVariation(m, full.position) }))
-    .sort((a, b) => topUpRank(b) - topUpRank(a) || a.san.localeCompare(b.san))
-    .slice(0, count - entries.length)
-  return entries.concat(extra)
-}
-
-function topUpRank(entry) {
-  const san = entry.san || ''
-  const to = (entry.uci || '').slice(2, 4)
-  let rank = 0
-  if (/[+#]/.test(san)) rank += 4
-  if (san.includes('x')) rank += 3
-  if (san.startsWith('O-O')) rank += 2
-  if (/^[NB]/.test(san)) rank += 1
-  if (['d4', 'd5', 'e4', 'e5'].includes(to)) rank += 1
-  return rank
 }
 
 function renderVariations(entries, full) {
@@ -1189,9 +1153,13 @@ function renderVariations(entries, full) {
 
   $('variation-position').textContent = positionLabel(position, sideToMove)
 
-  $('variation-count').textContent = state.variationShowAll
-    ? `${entries.length} legal ${entries.length === 1 ? 'move' : 'moves'}`
-    : `${entries.length} ${entries.length === 1 ? 'line' : 'lines'}`
+  const theoryCount = entries.filter(isTheory).length
+  const pastCount = entries.length - theoryCount
+  const noun = state.variationShowAll
+    ? `legal ${entries.length === 1 ? 'move' : 'moves'}`
+    : `${entries.length === 1 ? 'line' : 'lines'}`
+  const split = theoryCount && pastCount ? ` - ${theoryCount} theory, ${pastCount} past book` : ''
+  $('variation-count').textContent = `${entries.length} ${noun}${split}`
 
   $('variation-empty').classList.toggle('hidden', entries.length > 0)
 
@@ -1202,14 +1170,46 @@ function renderVariations(entries, full) {
   $('variation-plans').textContent = `${planText}${breaks}`
   $('variation-plans').classList.toggle('hidden', !planText)
 
-  list.replaceChildren(...entries.map((entry, i) => variationRow(entry, position, i)))
+  const rows = entries.map((entry, i) => variationRow(entry, position, i))
+  const cut = theoryEndIndex(entries)
+  if (cut !== -1) rows.splice(cut, 0, theoryDivider(position))
+  list.replaceChildren(...rows)
 }
 
-/** The start of the game is not "out of book" - it is the position every book
- *  starts from - and a named node without an ECO entry is not out of book
- *  either. Only trust position.inBook for that verdict. */
+/** Index of the first past-the-book entry, but only when the set really is
+ *  theory-first-then-not. Anything interleaved gets no divider rather than a
+ *  misleading one. */
+function theoryEndIndex(entries) {
+  const cut = entries.findIndex((e) => !isTheory(e))
+  if (cut <= 0) return -1
+  return entries.slice(cut).every((e) => !isTheory(e)) ? cut : -1
+}
+
+/** The moment the opening book stops having an opinion - the whole point of
+ *  the product, so the panel says it out loud instead of leaving the learner
+ *  to infer it from a dashed border. */
+function theoryDivider(position) {
+  const li = document.createElement('li')
+  li.className = 'var-divider'
+  li.setAttribute('role', 'separator')
+
+  const label = document.createElement('span')
+  label.className = 'var-divider-label'
+  label.textContent = 'End of theory'
+
+  const note = document.createElement('span')
+  note.className = 'var-divider-note'
+  note.textContent = position?.inBook
+    ? 'Below: sound moves past the book, not memorised lines'
+    : 'Below: sound moves, no book to follow'
+
+  li.append(label, note)
+  return li
+}
+
+/** A named node without an ECO entry is not out of book, so only trust
+ *  position.inBook for that verdict, never the absence of a name. */
 function positionLabel(position, sideToMove) {
-  if (!state.chess.history().length) return `Starting position - ${sideToMove} to move`
   if (position.name) {
     const eco = position.eco ? ` (${position.eco})` : ''
     const via = position.inherited ? ', by transposition' : ''
@@ -1219,13 +1219,25 @@ function positionLabel(position, sideToMove) {
   return `Out of book - ${sideToMove} to move`
 }
 
+/* Theory vs past-the-book.
+ *
+ * explorer.js marks every entry it returns with isBook. Real opening theory is
+ * isBook:true; the moves it adds to fill a difficulty preset once the book runs
+ * out are isBook:false (and carry novelty:true, name:null). That single field is
+ * the whole basis of the visual distinction below - the panel must never imply
+ * a topped-up move is documented theory. */
+function isTheory(entry) {
+  return entry.isBook === true
+}
+
 function variationClass(entry) {
-  if (entry.novelty) return 'novelty'
+  if (!isTheory(entry)) return 'novelty'
   if (entry.isMain) return 'main'
   return 'book'
 }
+
 function variationBadge(entry, position) {
-  if (entry.novelty) return position?.inBook ? 'beyond the book' : 'off book'
+  if (!isTheory(entry)) return position?.inBook ? 'beyond the book' : 'off book'
   if (entry.isMain) return 'main line'
   const pct = Math.round((entry.share || 0) * 100)
   return pct >= 15 ? 'known alternative' : 'sideline'
@@ -1265,8 +1277,8 @@ function variationRow(entry, position, index) {
   meta.className = 'var-meta'
   const bits = []
   if (entry.eco) bits.push(entry.eco)
-  if (entry.isBook && entry.lineCount) bits.push(`${Math.round((entry.share || 0) * 100)}% of book lines here`)
-  if (entry.beyondBook) bits.push('beyond the book')
+  if (isTheory(entry) && entry.lineCount) bits.push(`${Math.round((entry.share || 0) * 100)}% of book lines here`)
+  if (!isTheory(entry)) bits.push('not in the book')
   if (isSharp(entry)) bits.push('sharp')
   if (entry.level && !state.variationShowAll) bits.push(`${entry.level} set`)
   for (const bit of bits) {
