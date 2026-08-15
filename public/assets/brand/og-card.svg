@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Ramify: chess training built from your own games. Free, open source, runs entirely in your browser.">
+  <title>Ramify</title>
+  <rect width="1200" height="630" fill="#ffffff"/>
+  <rect x="24" y="24" width="1152" height="582" fill="none" stroke="#e5e5e5" stroke-width="2"/>
+
+  <!-- faceted branching-graph motif, right side, background weight only -->
+  <g stroke="#e5e5e5" stroke-width="2.5" fill="none">
+    <path d="M960 160 L860 260"/>
+    <path d="M960 160 L960 260"/>
+    <path d="M960 160 L1060 260"/>
+    <path d="M860 260 L960 260"/>
+    <path d="M960 260 L1060 260"/>
+    <path d="M860 260 L810 370"/>
+    <path d="M860 260 L910 370"/>
+    <path d="M960 260 L910 370"/>
+    <path d="M960 260 L1010 370"/>
+    <path d="M1060 260 L1010 370"/>
+    <path d="M1060 260 L1110 370"/>
+    <path d="M810 370 L910 370"/>
+    <path d="M910 370 L1010 370"/>
+    <path d="M1010 370 L1110 370"/>
+  </g>
+  <g fill="#d4d4d4">
+    <polygon points="960,146 974,160 960,174 946,160"/>
+    <polygon points="860,246 874,260 860,274 846,260"/>
+    <polygon points="960,246 974,260 960,274 946,260"/>
+    <polygon points="1060,246 1074,260 1060,274 1046,260"/>
+    <polygon points="810,356 823,370 810,384 797,370"/>
+    <polygon points="910,356 923,370 910,384 897,370"/>
+    <polygon points="1010,356 1023,370 1010,384 997,370"/>
+    <polygon points="1110,356 1123,370 1110,384 1097,370"/>
+  </g>
+
+  <!-- logo mark: same faceted pawn silhouette as favicon.svg, scaled up -->
+  <g transform="translate(55,56) scale(1.75)">
+    <path fill="#0a0a0a" d="M50,14 L59.9,18.1 L64,28 L59.9,37.9 L58,44 L68,70 L72,75 L80,88 L20,88 L28,75 L32,70 L42,44 L40.1,37.9 L36,28 L40.1,18.1 Z"/>
+  </g>
+
+  <text x="230" y="178" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="112" font-weight="800" letter-spacing="-2" fill="#0a0a0a">Ramify</text>
+
+  <text x="100" y="280" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="36" font-weight="500" fill="#404040">Chess training built from your own games.</text>
+
+  <text x="100" y="400" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="24" font-weight="700" letter-spacing="4" fill="#171717">LEARN  *  TRAIN  *  REVIEW</text>
+
+  <text x="100" y="560" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="26" fill="#737373">Free forever  *  Open source, MIT  *  Runs entirely in your browser</text>
+</svg>

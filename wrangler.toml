@@ -1,0 +1,22 @@
+name = "chess-local-learning"
+
+# Directory Cloudflare Pages deploys - the output of scripts/build-static.mjs.
+# Build command for the Cloudflare Pages dashboard: node scripts/build-static.mjs
+# (leave the deploy base at the default "/" - Cloudflare Pages serves from
+# the domain/project root, unlike a GitHub Pages project site).
+pages_build_output_dir = "dist"
+
+compatibility_date = "2025-01-01"
+
+# Pages Functions for /api/coach and /api/health (see functions/api/coach.js,
+# functions/api/health.js). Cloudflare Pages auto-detects this directory;
+# naming it here is just self-documenting. Both files are plain Web-standard
+# JS (fetch/Request/Response/AbortController) with no node: imports, so no
+# compatibility_flags are required.
+functions = "functions"
+
+# Do NOT put secrets in this file - it is committed to git. Set
+# ANTHROPIC_API_KEY (and optionally COACH_MODEL, OPENAI_API_KEY,
+# OPENAI_MODEL, OPENAI_BASE_URL) as encrypted environment variables in the
+# Cloudflare Pages dashboard (Settings > Environment variables), or with:
+#   wrangler pages secret put ANTHROPIC_API_KEY

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<!-- Standalone preview - open directly from disk, no server needed. -->
+<!-- Renders faceted.svg and silhouette.svg pieces (inlined below, ids -->
+<!-- prefixed "faceted-"/"silhouette-") at every required size, on both a -->
+<!-- white and a light-grey square, plus a full starting position. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chess piece sprite preview - faceted &amp; silhouette</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 40px 80px;
+    background: #f5f5f5;
+    color: #171717;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 36px 0 4px; text-transform: uppercase; letter-spacing: 0.06em; color: #404040; }
+  p.sub { margin: 0 0 28px; color: #737373; font-size: 14px; }
+  p.note { margin: 0 0 14px; color: #737373; font-size: 13px; }
+  section { border-top: 1px solid #d4d4d4; padding-top: 8px; }
+  .size-row { display: flex; align-items: center; gap: 14px; margin: 10px 0; }
+  .size-label { width: 48px; flex: 0 0 auto; font-size: 12px; color: #737373; text-align: right; }
+  .cells { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cell { display: flex; align-items: center; justify-content: center; border: 1px solid #d4d4d4; }
+  .sq-white { background: #ffffff; }
+  .sq-grey { background: #e5e5e5; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, 52px);
+    grid-template-rows: repeat(8, 52px);
+    border: 2px solid #171717;
+    width: max-content;
+  }
+  .bsq { position: relative; display: flex; align-items: center; justify-content: center; }
+  .bsq svg { width: 46px; height: 46px; }
+  .boards { display: flex; gap: 48px; flex-wrap: wrap; }
+  footer { margin-top: 48px; color: #a3a3a3; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Chess piece sprite preview</h1>
+<p class="sub">public/assets/pieces/faceted.svg and silhouette.svg - open this file directly from disk (file://), no server required. Judge legibility at 45px: that is roughly the real rendered square size on the board.</p>
+
+<section>
+<h2>faceted.svg - low-poly faceted set</h2>
+<p class="note">All twelve pieces, alternating white / light-grey squares, at 24, 45 (real board size), 64 and 128px.</p>
+<div class="size-row"><div class="size-label">24px</div><div class="cells"><div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-wq"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-wb"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-wp"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-bq"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-br"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-bb"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#faceted-bp"></use></svg></div>
+</div></div>
+<div class="size-row"><div class="size-label">45px</div><div class="cells"><div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-wq"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-wb"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-wp"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-bq"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-br"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-bb"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#faceted-bp"></use></svg></div>
+</div></div>
+<div class="size-row"><div class="size-label">64px</div><div class="cells"><div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-wq"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-wb"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-wp"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-bq"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-br"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-bb"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#faceted-bp"></use></svg></div>
+</div></div>
+<div class="size-row"><div class="size-label">128px</div><div class="cells"><div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-wq"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-wb"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-wp"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-bq"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-br"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-bb"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#faceted-bp"></use></svg></div>
+</div></div>
+</section>
+<section>
+<h2>silhouette.svg - solid woodcut-style set</h2>
+<p class="note">All twelve pieces, alternating white / light-grey squares, at 24, 45 (real board size), 64 and 128px.</p>
+<div class="size-row"><div class="size-label">24px</div><div class="cells"><div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-wq"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-wb"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-wp"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-bq"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-br"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-bb"></use></svg></div>
+<div class="cell sq-white" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:24px;height:24px"><svg viewBox="0 0 40 40" width="24" height="24"><use href="#silhouette-bp"></use></svg></div>
+</div></div>
+<div class="size-row"><div class="size-label">45px</div><div class="cells"><div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-wq"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-wb"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-wp"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-bq"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-br"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-bb"></use></svg></div>
+<div class="cell sq-white" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:45px;height:45px"><svg viewBox="0 0 40 40" width="45" height="45"><use href="#silhouette-bp"></use></svg></div>
+</div></div>
+<div class="size-row"><div class="size-label">64px</div><div class="cells"><div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-wq"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-wb"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-wp"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-bq"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-br"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-bb"></use></svg></div>
+<div class="cell sq-white" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:64px;height:64px"><svg viewBox="0 0 40 40" width="64" height="64"><use href="#silhouette-bp"></use></svg></div>
+</div></div>
+<div class="size-row"><div class="size-label">128px</div><div class="cells"><div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-wk"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-wq"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-wr"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-wb"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-wn"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-wp"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-bk"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-bq"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-br"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-bb"></use></svg></div>
+<div class="cell sq-white" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-bn"></use></svg></div>
+<div class="cell sq-grey" style="width:128px;height:128px"><svg viewBox="0 0 40 40" width="128" height="128"><use href="#silhouette-bp"></use></svg></div>
+</div></div>
+</section>
+
+<h2>Starting position on a monochrome board</h2>
+<p class="note">8x8 layout, standard chess starting position, white pieces on ranks 1-2, black on ranks 7-8.</p>
+<div class="boards">
+<section>
+<h2>faceted.svg - starting position</h2>
+<div class="board"><div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-br"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-bn"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-bb"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-bq"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-bk"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-bb"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-bn"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-br"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-bp"></use></svg></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wr"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wn"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wb"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wq"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wk"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wb"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#faceted-wn"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#faceted-wr"></use></svg></div>
+</div>
+</section>
+<section>
+<h2>silhouette.svg - starting position</h2>
+<div class="board"><div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-br"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-bn"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-bb"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-bq"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-bk"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-bb"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-bn"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-br"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-bp"></use></svg></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-grey"></div>
+<div class="bsq sq-white"></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wp"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wr"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wn"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wb"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wq"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wk"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wb"></use></svg></div>
+<div class="bsq sq-grey"><svg viewBox="0 0 40 40"><use href="#silhouette-wn"></use></svg></div>
+<div class="bsq sq-white"><svg viewBox="0 0 40 40"><use href="#silhouette-wr"></use></svg></div>
+</div>
+</section>
+</div>
+
+<footer>Original artwork authored for Chess Local Learning. Not derived from Staunty, Cburnett, Merida, Wikimedia or any other existing chess set. See README.md in this folder.</footer>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<g id="faceted-wk">
+    <polygon points="10,37 10,33.5 13.4,29 14,21 13,19 13,17 14,15 13.4,13 17.8,11.6 17.8,9.4 16,9.4 16,7.2 18.6,7.2 18.6,3.2 20,3.2 20,3.2 21.4,3.2 21.4,7.2 24,7.2 24,9.4 22.2,9.4 22.2,11.6 26.6,13 26,15 27,17 27,19 26,21 26.6,29 30,33.5 30,37" fill="#d4d4d4" stroke="#171717" stroke-width="1.2" stroke-linejoin="round"/><polygon points="10,37 10,33.5 13.4,29 14,21 13,19 13,17 14,15 13.4,13 17.8,11.6 17.8,9.4 16,9.4 16,7.2 18.6,7.2 18.6,3.2 20,3.2 20,37" fill="#f5f5f5"/><polygon points="18.6,7.2 16,7.2 16,9.4 17.8,9.4 17.8,6.6" fill="#ffffff"/>
+  </g>
+<g id="faceted-wq">
+    <polygon points="10,37 10,33.5 13.5,29 13.8,21 13,19 13,17 12.5,13 12.5,12 15.4,5.6 16.4,11 18.2,11 20,3.4 20,3.4 21.8,11 23.6,11 24.6,5.6 27.5,12 27.5,13 27,17 27,19 26.2,21 26.5,29 30,33.5 30,37" fill="#d4d4d4" stroke="#171717" stroke-width="1.2" stroke-linejoin="round"/><polygon points="10,37 10,33.5 13.5,29 13.8,21 13,19 13,17 12.5,13 12.5,12 15.4,5.6 16.4,11 18.2,11 20,3.4 20,37" fill="#f5f5f5"/><polygon points="20,3.4 18.2,11 16.4,11" fill="#ffffff"/>
+  </g>
+<g id="faceted-wr">
+    <polygon points="10.5,37 10.5,33.5 11,29 11.3,12 11,12 11,9 14,9 14,12 16,12 16,9 19,9 19,12 21,12 21,9 24,9 24,12 26,12 26,9 29,9 29,12 28.7,12 29,29 29.5,33.5 29.5,37" fill="#d4d4d4" stroke="#171717" stroke-width="1.2" stroke-linejoin="round"/><polygon points="10.5,37 10.5,33.5 11,29 11.3,12 11,12 11,9 14,9 14,12 16,12 16,9 19,9 19,12 20,12 20,37" fill="#f5f5f5"/><polygon points="11,9 14,9 14,12 11,12" fill="#ffffff"/>
+  </g>
+<g id="faceted-wb">
+    <polygon points="11,37 11,33.5 14,29 14.1,20 13.6,16.8 15.4,13 17.2,9.4 19.6,11.8 22.4,7 24.6,13 26.4,16.8 25.9,20 26,29 29,33.5 29,37" fill="#d4d4d4" stroke="#171717" stroke-width="1.2" stroke-linejoin="round"/><polygon points="11,37 11,33.5 14,29 14.1,20 13.6,16.8 15.4,13 17.2,9.4 19.6,11.8 20,20 20,37" fill="#f5f5f5"/><polygon points="17.2,9.4 19.6,11.8 18.8,9 17.8,8.6" fill="#ffffff"/>
+  </g>
+<g id="faceted-wn">
+    <polygon points="11,37 11,33.5 12,29 10.5,24 6.5,19 3,17 8,13.5 11.5,8 11.5,6.5 14,2.2 17,6 19,8 24.2,10.6 21.8,15.6 26.6,24.5 28,29 29,33.5 29,37" fill="#d4d4d4" stroke="#171717" stroke-width="1.2" stroke-linejoin="round"/><polygon points="11,37 11,33.5 12,29 10.5,24 6.5,19 3,17 8,13.5 11.5,8 11.5,6.5 14,2.2 17,6 19,8 19,20 19,37" fill="#f5f5f5"/><polygon points="8,13.5 11.5,8 10.5,11" fill="#ffffff"/>
+  </g>
+<g id="faceted-wp">
+    <polygon points="12.5,37 12.5,33.5 15.4,32 18.2,25.2 16.4,22.6 15.7,19.5 16.4,16.4 20,14.6 20,14.6 23.6,16.4 24.3,19.5 23.6,22.6 21.8,25.2 24.6,32 27.5,33.5 27.5,37" fill="#d4d4d4" stroke="#171717" stroke-width="1.2" stroke-linejoin="round"/><polygon points="12.5,37 12.5,33.5 15.4,32 18.2,25.2 16.4,22.6 15.7,19.5 16.4,16.4 20,14.6 20,37" fill="#f5f5f5"/><polygon points="20,14.6 16.4,16.4 18.4,17.8 19.7,16" fill="#ffffff"/>
+  </g>
+<g id="faceted-bk">
+    <polygon points="10,37 10,33.5 13.4,29 14,21 13,19 13,17 14,15 13.4,13 17.8,11.6 17.8,9.4 16,9.4 16,7.2 18.6,7.2 18.6,3.2 20,3.2 20,3.2 21.4,3.2 21.4,7.2 24,7.2 24,9.4 22.2,9.4 22.2,11.6 26.6,13 26,15 27,17 27,19 26,21 26.6,29 30,33.5 30,37" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" stroke-linejoin="round"/><polygon points="10,37 10,33.5 13.4,29 14,21 13,19 13,17 14,15 13.4,13 17.8,11.6 17.8,9.4 16,9.4 16,7.2 18.6,7.2 18.6,3.2 20,3.2 20,37" fill="#171717"/><polygon points="18.6,7.2 16,7.2 16,9.4 17.8,9.4 17.8,6.6" fill="#404040"/>
+  </g>
+<g id="faceted-bq">
+    <polygon points="10,37 10,33.5 13.5,29 13.8,21 13,19 13,17 12.5,13 12.5,12 15.4,5.6 16.4,11 18.2,11 20,3.4 20,3.4 21.8,11 23.6,11 24.6,5.6 27.5,12 27.5,13 27,17 27,19 26.2,21 26.5,29 30,33.5 30,37" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" stroke-linejoin="round"/><polygon points="10,37 10,33.5 13.5,29 13.8,21 13,19 13,17 12.5,13 12.5,12 15.4,5.6 16.4,11 18.2,11 20,3.4 20,37" fill="#171717"/><polygon points="20,3.4 18.2,11 16.4,11" fill="#404040"/>
+  </g>
+<g id="faceted-br">
+    <polygon points="10.5,37 10.5,33.5 11,29 11.3,12 11,12 11,9 14,9 14,12 16,12 16,9 19,9 19,12 21,12 21,9 24,9 24,12 26,12 26,9 29,9 29,12 28.7,12 29,29 29.5,33.5 29.5,37" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" stroke-linejoin="round"/><polygon points="10.5,37 10.5,33.5 11,29 11.3,12 11,12 11,9 14,9 14,12 16,12 16,9 19,9 19,12 20,12 20,37" fill="#171717"/><polygon points="11,9 14,9 14,12 11,12" fill="#404040"/>
+  </g>
+<g id="faceted-bb">
+    <polygon points="11,37 11,33.5 14,29 14.1,20 13.6,16.8 15.4,13 17.2,9.4 19.6,11.8 22.4,7 24.6,13 26.4,16.8 25.9,20 26,29 29,33.5 29,37" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" stroke-linejoin="round"/><polygon points="11,37 11,33.5 14,29 14.1,20 13.6,16.8 15.4,13 17.2,9.4 19.6,11.8 20,20 20,37" fill="#171717"/><polygon points="17.2,9.4 19.6,11.8 18.8,9 17.8,8.6" fill="#404040"/>
+  </g>
+<g id="faceted-bn">
+    <polygon points="11,37 11,33.5 12,29 10.5,24 6.5,19 3,17 8,13.5 11.5,8 11.5,6.5 14,2.2 17,6 19,8 24.2,10.6 21.8,15.6 26.6,24.5 28,29 29,33.5 29,37" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" stroke-linejoin="round"/><polygon points="11,37 11,33.5 12,29 10.5,24 6.5,19 3,17 8,13.5 11.5,8 11.5,6.5 14,2.2 17,6 19,8 19,20 19,37" fill="#171717"/><polygon points="8,13.5 11.5,8 10.5,11" fill="#404040"/>
+  </g>
+<g id="faceted-bp">
+    <polygon points="12.5,37 12.5,33.5 15.4,32 18.2,25.2 16.4,22.6 15.7,19.5 16.4,16.4 20,14.6 20,14.6 23.6,16.4 24.3,19.5 23.6,22.6 21.8,25.2 24.6,32 27.5,33.5 27.5,37" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" stroke-linejoin="round"/><polygon points="12.5,37 12.5,33.5 15.4,32 18.2,25.2 16.4,22.6 15.7,19.5 16.4,16.4 20,14.6 20,37" fill="#171717"/><polygon points="20,14.6 16.4,16.4 18.4,17.8 19.7,16" fill="#404040"/>
+  </g>
+<g id="silhouette-wk">
+    <polygon points="10,37 10,33.5 13.4,29 14,21 13,19 13,17 14,15 13.4,13 17.8,11.6 17.8,9.4 16,9.4 16,7.2 18.6,7.2 18.6,3.2 20,3.2 20,3.2 21.4,3.2 21.4,7.2 24,7.2 24,9.4 22.2,9.4 22.2,11.6 26.6,13 26,15 27,17 27,19 26,21 26.6,29 30,33.5 30,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-wq">
+    <polygon points="10,37 10,33.5 13.5,29 13.8,21 13,19 13,17 12.5,13 12.5,12 15.4,5.6 16.4,11 18.2,11 20,3.4 20,3.4 21.8,11 23.6,11 24.6,5.6 27.5,12 27.5,13 27,17 27,19 26.2,21 26.5,29 30,33.5 30,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-wr">
+    <polygon points="10.5,37 10.5,33.5 11,29 11.3,12 11,12 11,9 14,9 14,12 16,12 16,9 19,9 19,12 21,12 21,9 24,9 24,12 26,12 26,9 29,9 29,12 28.7,12 29,29 29.5,33.5 29.5,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-wb">
+    <polygon points="11,37 11,33.5 14,29 14.1,20 13.6,16.8 15.4,13 17.2,9.4 19.6,11.8 22.4,7 24.6,13 26.4,16.8 25.9,20 26,29 29,33.5 29,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-wn">
+    <polygon points="11,37 11,33.5 12,29 10.5,24 6.5,19 3,17 8,13.5 11.5,8 11.5,6.5 14,2.2 17,6 19,8 24.2,10.6 21.8,15.6 26.6,24.5 28,29 29,33.5 29,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-wp">
+    <polygon points="12.5,37 12.5,33.5 15.4,32 18.2,25.2 16.4,22.6 15.7,19.5 16.4,16.4 20,14.6 20,14.6 23.6,16.4 24.3,19.5 23.6,22.6 21.8,25.2 24.6,32 27.5,33.5 27.5,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-bk">
+    <polygon points="10,37 10,33.5 13.4,29 14,21 13,19 13,17 14,15 13.4,13 17.8,11.6 17.8,9.4 16,9.4 16,7.2 18.6,7.2 18.6,3.2 20,3.2 20,3.2 21.4,3.2 21.4,7.2 24,7.2 24,9.4 22.2,9.4 22.2,11.6 26.6,13 26,15 27,17 27,19 26,21 26.6,29 30,33.5 30,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-bq">
+    <polygon points="10,37 10,33.5 13.5,29 13.8,21 13,19 13,17 12.5,13 12.5,12 15.4,5.6 16.4,11 18.2,11 20,3.4 20,3.4 21.8,11 23.6,11 24.6,5.6 27.5,12 27.5,13 27,17 27,19 26.2,21 26.5,29 30,33.5 30,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-br">
+    <polygon points="10.5,37 10.5,33.5 11,29 11.3,12 11,12 11,9 14,9 14,12 16,12 16,9 19,9 19,12 21,12 21,9 24,9 24,12 26,12 26,9 29,9 29,12 28.7,12 29,29 29.5,33.5 29.5,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-bb">
+    <polygon points="11,37 11,33.5 14,29 14.1,20 13.6,16.8 15.4,13 17.2,9.4 19.6,11.8 22.4,7 24.6,13 26.4,16.8 25.9,20 26,29 29,33.5 29,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-bn">
+    <polygon points="11,37 11,33.5 12,29 10.5,24 6.5,19 3,17 8,13.5 11.5,8 11.5,6.5 14,2.2 17,6 19,8 24.2,10.6 21.8,15.6 26.6,24.5 28,29 29,33.5 29,37" fill="#0a0a0a"/>
+  </g>
+<g id="silhouette-bp">
+    <polygon points="12.5,37 12.5,33.5 15.4,32 18.2,25.2 16.4,22.6 15.7,19.5 16.4,16.4 20,14.6 20,14.6 23.6,16.4 24.3,19.5 23.6,22.6 21.8,25.2 24.6,32 27.5,33.5 27.5,37" fill="#0a0a0a"/>
+  </g>
+</defs>
+</svg>
+
+</body>
+</html>

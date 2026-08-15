@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ramify - chess training built from your own games</title>
+<meta name="description" content="Ramify is a free, open source chess trainer that builds your curriculum from your own games. Stockfish 18 finds your real mistakes, a coach explains the pattern behind them in plain English, and a variation explorer shows every reply from any position. Runs entirely in your browser: no account, no upload, no cost.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#ffffff">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ramify">
+<meta property="og:title" content="Ramify - chess training built from your own games">
+<meta property="og:description" content="Stockfish finds your real mistakes, a coach explains the pattern, an explorer shows every variation from any position. Free, open source, runs entirely in your browser.">
+<meta property="og:url" content="https://ragnarpitla.github.io/chess-local-learning/landing.html">
+<meta property="og:image" content="./assets/brand/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ramify: chess training built from your own games">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ramify - chess training built from your own games">
+<meta name="twitter:description" content="Stockfish finds your real mistakes, a coach explains the pattern, an explorer shows every variation from any position. Free, open source, private by default.">
+<meta name="twitter:image" content="./assets/brand/og-card.png">
+<meta name="twitter:image:alt" content="Ramify: chess training built from your own games">
+
+<link rel="icon" href="./assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./css/landing.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="container">
+    <a class="wordmark" href="#top">
+      <img class="wordmark-icon" src="./assets/brand/favicon.svg" alt="" width="22" height="22">
+      <span class="mark">Ramify</span>
+      <span class="strap">chess that studies your own games</span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#explorer">Explorer</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="https://github.com/RagnarPitla/chess-local-learning">GitHub</a></li>
+        <li><a class="cta" href="./index.html">Open Ramify</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- ============================================================ HERO -->
+  <section class="hero" id="top" aria-labelledby="hero-heading">
+    <div class="container">
+      <div class="hero-copy">
+        <p class="hero-kicker badge"><img src="./assets/brand/favicon.svg" alt="" width="12" height="12">Ramify</p>
+        <h1 id="hero-heading">Your games, turned into your chess curriculum.</h1>
+        <p class="sub-line">
+          Opening courses teach you a straight line: if they play this, you play that.
+          A real opponent can play almost anything, and the moment they do, a memorised
+          line is a script with nothing left to say. <strong>Ramify studies the games you
+          actually played</strong>, finds where you actually went wrong, and teaches the
+          pattern behind it, so you still have a plan when no one is reading from your script.
+        </p>
+        <div class="cta-row">
+          <a class="btn primary" href="./index.html">Open Ramify, it's free</a>
+          <a class="btn ghost" href="https://github.com/RagnarPitla/chess-local-learning">View the code on GitHub</a>
+        </div>
+        <p class="microcopy">
+          Free forever<span class="sep">*</span>Open source, MIT<span class="sep">*</span>No account<span class="sep">*</span>Nothing leaves your browser unless you ask it to
+        </p>
+      </div>
+      <div class="hero-art">
+        <svg viewBox="0 0 520 400" role="img" aria-label="Diagram contrasting a memorised opening line, shown as one narrow highlighted path down a small tree, with a real opponent's options, shown as a dense web where every move connects to several others. Rendered in a faceted, low-poly style: every node is a small diamond, not a circle.">
+          <!-- tree half: one highlighted path, the rest inactive/dim.
+               Inactive branches use the neutral --border tone: they are
+               the deliberately de-emphasised "path not taken", so WCAG's
+               inactive-component allowance applies. The live path and its
+               nodes use --foreground at full contrast (19.8:1 on white). -->
+          <g stroke="#e5e5e5" stroke-width="2" fill="none">
+            <path d="M125 62 L72 128"/>
+            <path d="M125 62 L178 128"/>
+            <path d="M72 128 L47 196"/>
+            <path d="M72 128 L97 196"/>
+            <path d="M178 128 L153 196"/>
+            <path d="M178 128 L203 196"/>
+          </g>
+          <path d="M125 62 L72 128 L47 196" stroke="#0a0a0a" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- faceted diamond nodes: cx,cy-r  cx+r,cy  cx,cy+r  cx-r,cy -->
+          <polygon points="125,55 132,62 125,69 118,62" fill="#0a0a0a"/>
+          <polygon points="72,122 78,128 72,134 66,128" fill="#0a0a0a"/>
+          <polygon points="178,123 183,128 178,133 173,128" fill="#f5f5f5" stroke="#e5e5e5" stroke-width="2"/>
+          <polygon points="47,190 53,196 47,202 41,196" fill="#0a0a0a"/>
+          <polygon points="97,191 102,196 97,201 92,196" fill="#f5f5f5" stroke="#e5e5e5" stroke-width="2"/>
+          <polygon points="153,191 158,196 153,201 148,196" fill="#f5f5f5" stroke="#e5e5e5" stroke-width="2"/>
+          <polygon points="203,191 208,196 203,201 198,196" fill="#f5f5f5" stroke="#e5e5e5" stroke-width="2"/>
+          <text x="125" y="26" text-anchor="middle" fill="#737373" font-size="13" font-weight="700" letter-spacing="0.06em">A LESSON</text>
+          <text x="125" y="228" text-anchor="middle" fill="#737373" font-size="12">one line, memorised</text>
+
+          <line x1="255" y1="20" x2="255" y2="240" stroke="#e5e5e5" stroke-width="1.5" stroke-dasharray="4 5"/>
+
+          <!-- graph half: dense, interconnected, no single "right" path.
+               Every node carries the same visual weight as the tree's one
+               highlighted path, on purpose: these are just as real, there
+               are simply more of them. Mesh lines use --muted-foreground
+               (4.74:1 on white), comfortably clearing the 3:1 minimum for
+               a meaningful graphic. -->
+          <g stroke="#737373" stroke-width="1.75" fill="none" opacity="0.9">
+            <path d="M415 62 L358 128"/>
+            <path d="M415 62 L415 128"/>
+            <path d="M415 62 L472 128"/>
+            <path d="M358 128 L415 128"/>
+            <path d="M415 128 L472 128"/>
+            <path d="M358 128 L333 196"/>
+            <path d="M358 128 L383 196"/>
+            <path d="M415 128 L383 196"/>
+            <path d="M415 128 L448 196"/>
+            <path d="M472 128 L448 196"/>
+            <path d="M472 128 L497 196"/>
+            <path d="M333 196 L383 196"/>
+            <path d="M383 196 L448 196"/>
+            <path d="M448 196 L497 196"/>
+          </g>
+          <polygon points="415,55 422,62 415,69 408,62" fill="#0a0a0a"/>
+          <polygon points="358,122 364,128 358,134 352,128" fill="#0a0a0a"/>
+          <polygon points="415,122 421,128 415,134 409,128" fill="#0a0a0a"/>
+          <polygon points="472,122 478,128 472,134 466,128" fill="#0a0a0a"/>
+          <polygon points="333,190.5 338.5,196 333,201.5 327.5,196" fill="#0a0a0a"/>
+          <polygon points="383,190.5 388.5,196 383,201.5 377.5,196" fill="#0a0a0a"/>
+          <polygon points="448,190.5 453.5,196 448,201.5 442.5,196" fill="#0a0a0a"/>
+          <polygon points="497,190.5 502.5,196 497,201.5 491.5,196" fill="#0a0a0a"/>
+          <text x="415" y="26" text-anchor="middle" fill="#737373" font-size="13" font-weight="700" letter-spacing="0.06em">A REAL GAME</text>
+          <text x="415" y="228" text-anchor="middle" fill="#737373" font-size="12">any of these is possible</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= PROBLEM -->
+  <section class="prose-section" id="problem" aria-labelledby="problem-heading">
+    <div class="container">
+      <h2 id="problem-heading">You know this feeling</h2>
+      <p>
+        You studied an opening line down to move nine. Your opponent played something else
+        on move four.
+      </p>
+      <p>
+        Now you are improvising against someone who was never going to follow your notes,
+        and in the moment you cannot tell whether your position is fine or already lost.
+        Ten moves later you resign, or you win anyway and are not sure why. Either way, you
+        did not learn anything you can use next time.
+      </p>
+      <p class="muted">
+        That is not a memory problem. What you memorised was a path through one specific
+        game, not a way of understanding any game, and a path with no more branches is a
+        dead end the moment someone steps off it.
+      </p>
+    </div>
+  </section>
+
+  <!-- =================================================== HOW IT WORKS -->
+  <section id="how-it-works" aria-labelledby="how-heading">
+    <div class="container">
+      <h2 id="how-heading">How it works</h2>
+      <p class="lede">One loop, run after every game, that turns what actually happened at the board into what you study next.</p>
+      <ol class="steps">
+        <li>
+          <h3>Play, or bring in a game</h3>
+          <p>Play the built-in Stockfish opponent at a level that fits you, or bring in a game you already played on Lichess or Chess.com.</p>
+        </li>
+        <li>
+          <h3>The engine finds your real mistakes</h3>
+          <p>Stockfish 18 scores every position in the game, right in your browser, and flags exactly where the evaluation, and your win chance, dropped.</p>
+        </li>
+        <li>
+          <h3>The coach explains the pattern, not just the move</h3>
+          <p>Each mistake is tagged with the real chess reason: a hanging piece, a missed fork, an overloaded defender, a bad bishop, one of 23 recognised patterns, explained in plain English.</p>
+        </li>
+        <li>
+          <h3>You drill it until it stops happening</h3>
+          <p>The position you got wrong becomes a puzzle. Spaced repetition brings your worst patterns back exactly as often as you still need them, and lets go once you don't.</p>
+        </li>
+      </ol>
+      <p class="steps-loop">
+        <svg class="loop-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 4a8 8 0 1 1-7.5 5.2 1 1 0 1 1 1.87.7A6 6 0 1 0 12 6V2.7a.3.3 0 0 0-.5-.22L8 5.5l3.5 3a.3.3 0 0 0 .5-.22V6a6 6 0 0 1 0 0V4Z"/></svg>
+        Then you play again, and the curriculum updates itself.
+      </p>
+    </div>
+  </section>
+
+  <!-- ========================================================= THE JOBS -->
+  <section id="jobs" aria-labelledby="jobs-heading">
+    <div class="container">
+      <h2 id="jobs-heading">Three jobs, one loop</h2>
+      <p class="lede">Learn, train and review are not three different products bolted together. They are three views of the same weakness profile.</p>
+      <ul class="jobs">
+        <li>
+          <span class="job-kicker">Learn</span>
+          <h3>Principles that survive deviation</h3>
+          <p>When your opponent leaves known theory, which happens to almost everyone by move ten, Ramify does not go quiet. It names what changed on the board and which principle applies, and it can turn any pattern that keeps costing you into a short, plain-English lesson.</p>
+        </li>
+        <li>
+          <span class="job-kicker">Train</span>
+          <h3>Drills from your own blunders</h3>
+          <p>Every mistake becomes a puzzle set at the exact position where you went wrong, not a generic puzzle about someone else's game. A weakness profile ranks what is actually costing you, and a Leitner-style schedule keeps bringing a pattern back until you have earned the right to stop seeing it.</p>
+        </li>
+        <li>
+          <span class="job-kicker">Review</span>
+          <h3>A real reason for every mistake</h3>
+          <p>Stockfish 18 reviews every move: centipawn loss, win-probability swing, and a classification from best to blunder. Then the pattern engine explains why, using static exchange evaluation, forks, pins, skewers, overloaded defenders, pawn structure and king safety.</p>
+          <ul class="class-legend" aria-label="Example move classifications">
+            <li><span class="dot dot-good" aria-hidden="true"></span>Good</li>
+            <li><span class="dot dot-inaccuracy" aria-hidden="true"></span>Inaccuracy</li>
+            <li><span class="dot dot-blunder" aria-hidden="true"></span>Blunder</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ========================================================== EXPLORER -->
+  <section class="explorer-section" id="explorer" aria-labelledby="explorer-heading">
+    <div class="container">
+      <h2 id="explorer-heading">See the whole position, not one line through it</h2>
+      <p class="lede">
+        Opening prep usually shows you one move at a time: the one your course expects.
+        The explorer shows you the branch. From any position you reach, it lists every
+        legal reply, names the ones that are recognised theory, and explains what each
+        one is actually for.
+      </p>
+
+      <div class="explorer-grid">
+        <div class="explorer-demo">
+          <p class="demo-label">Example, straight from the app's own opening data</p>
+          <p class="demo-position">After <strong>1. e4 e5 2. Nf3 Nc6 3. Bb5</strong> (Ruy Lopez, ECO C60), all 30 legal replies are known. Here are the named ones:</p>
+          <ul class="variation-list">
+            <li class="is-main">
+              <span class="san">3...a6</span>
+              <span class="name">Ruy Lopez: Morphy Defense<span class="eco">C70</span></span>
+              <span class="share">65% of games</span>
+            </li>
+            <li>
+              <span class="san">3...Nf6</span>
+              <span class="name">Ruy Lopez: Berlin Defense<span class="eco">C65</span></span>
+              <span class="share">16% of games</span>
+            </li>
+            <li>
+              <span class="san">3...f5</span>
+              <span class="name">Ruy Lopez: Schliemann Defense<span class="eco">C63</span></span>
+              <span class="share">4% of games</span>
+            </li>
+            <li>
+              <span class="san">3...Bc5</span>
+              <span class="name">Ruy Lopez: Classical Variation<span class="eco">C64</span></span>
+              <span class="share">3% of games</span>
+            </li>
+            <li class="novelty">
+              <span class="san">3...Ba3</span>
+              <span class="name">not in the book here, marked honestly rather than hidden</span>
+              <span class="share">outside theory</span>
+            </li>
+          </ul>
+        </div>
+        <div class="explorer-copy">
+          <p>
+            Pick any reply and the explorer explains itself: what it is called, how often
+            it is actually played, and the plan behind it, for example "the main line,
+            played in most games from here" or "a sideline, seen in about 3% of games from
+            here". Run past the last named move and the explanation does not stop: it
+            falls back to the same short list of principles a strong player reaches for
+            once preparation runs out, who controls the centre, whose piece is doing the
+            least work, are both kings safe, what does the structure promise or threaten.
+          </p>
+          <div class="stat-row">
+            <div class="stat"><b>3,800+</b><span>named lines in the reference tree</span></div>
+            <div class="stat"><b>8,600+</b><span>distinct positions charted</span></div>
+            <div class="stat"><b>36</b><span>plies deep at maximum</span></div>
+          </div>
+          <p class="muted">
+            Built from Lichess's public, CC0-licensed opening data, not memorised by you,
+            just available to you the moment you need it.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== DIFFERENT -->
+  <section id="different" aria-labelledby="different-heading">
+    <div class="container">
+      <h2 id="different-heading">Why this is not just another engine, or another opening trainer</h2>
+      <div class="compare-grid">
+        <div class="compare-card">
+          <h3>Compared with generic engine analysis</h3>
+          <p>
+            Plenty of tools will tell you a move lost 0.8 of a pawn. Fewer will tell you
+            why: a piece was overloaded, a bishop was bad, your king had one fewer
+            defender than the position needed. A number is an evaluation. A reason is a
+            lesson, and it is the reason that lets you recognise the same mistake
+            somewhere else.
+          </p>
+        </div>
+        <div class="compare-card">
+          <h3>Compared with memorising opening lines</h3>
+          <p>
+            Other tools help you memorise more lines, more deeply. That works exactly
+            until your opponent leaves the line, which below master level is usually
+            before move fifteen. Depth of memorisation does not fix a shallow
+            understanding of why the moves were good, and understanding is the part that
+            has to do the work once you are on your own.
+          </p>
+        </div>
+      </div>
+      <p class="compare-close">
+        <strong>Ramify starts from your actual games</strong>, tags what actually goes
+        wrong, and teaches the principle underneath it, the part that stays true no
+        matter what your opponent plays next.
+      </p>
+    </div>
+  </section>
+
+  <!-- ======================================================== PRIVACY -->
+  <section class="prose-section privacy-section" id="privacy" aria-labelledby="privacy-heading">
+    <div class="container">
+      <h2 id="privacy-heading">Runs on your machine. Costs nothing. Answers to no one.</h2>
+      <p>
+        Stockfish is compiled to WebAssembly and analyses every position on your
+        machine; there is no server watching. There is no account to create and
+        nothing to upload: your games and your weakness profile live in your browser's
+        local storage.
+      </p>
+      <p class="muted">
+        The only network calls Ramify can make are ones you choose to trigger yourself:
+        bringing in a game you already played on Lichess or Chess.com, or fetching an
+        extra themed puzzle from Lichess's public API. Everything else, every
+        evaluation, every pattern tag, every drill, every lesson, runs locally and stays
+        there.
+      </p>
+      <ul class="privacy-list">
+        <li><svg class="icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Zm0 2.2 6 2.2v4.6c0 4-2.6 6.9-6 8-3.4-1.1-6-4-6-8V6.4l6-2.2Z"/></svg>No account, ever</li>
+        <li><svg class="icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Zm0 2.2 6 2.2v4.6c0 4-2.6 6.9-6 8-3.4-1.1-6-4-6-8V6.4l6-2.2Z"/></svg>Free today and it will stay free</li>
+        <li><svg class="icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Zm0 2.2 6 2.2v4.6c0 4-2.6 6.9-6 8-3.4-1.1-6-4-6-8V6.4l6-2.2Z"/></svg>MIT licensed, source hosted in the open</li>
+        <li><svg class="icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Zm0 2.2 6 2.2v4.6c0 4-2.6 6.9-6 8-3.4-1.1-6-4-6-8V6.4l6-2.2Z"/></svg>Fork it or run your own copy any time</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================= FAQ -->
+  <section id="faq" aria-labelledby="faq-heading">
+    <div class="container">
+      <h2 id="faq-heading">Frequently asked questions</h2>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Is it really free?<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 6l6 6-6 6V6z"/></svg></summary>
+          <div class="faq-answer"><p>Yes. There is no tier, no paywall and no trial period. The hosted version costs nothing to use, and the source is MIT licensed if you would rather run your own copy.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Do I need an account?<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 6l6 6-6 6V6z"/></svg></summary>
+          <div class="faq-answer"><p>No. There is no sign-up and no login anywhere in the app. Open it and start playing or reviewing.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Does it work offline?<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 6l6 6-6 6V6z"/></svg></summary>
+          <div class="faq-answer"><p>Once the page and the engine have loaded, yes: playing, reviewing, tagging patterns and drilling all run locally with no further network calls. Loading the app for the first time, or after clearing your cache, still needs one connection, the same as any web page; after that, the chess itself does not need the internet.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>What engine is it?<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 6l6 6-6 6V6z"/></svg></summary>
+          <div class="faq-answer"><p>Stockfish 18, one of the strongest chess engines that exists, compiled to WebAssembly and run in a background thread in your browser. It is the same analysis a strong desktop engine would give you, not a lightweight imitation.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Can I import my Lichess and Chess.com games?<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 6l6 6-6 6V6z"/></svg></summary>
+          <div class="faq-answer"><p>Yes. Bring in a game you have already played on either site and Ramify reviews it exactly like one you played inside the app, including naming the opening and generating drills from anything you got wrong.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Is my data sent anywhere?<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 6l6 6-6 6V6z"/></svg></summary>
+          <div class="faq-answer"><p>Not unless you ask it to be. Your games and profile stay in your browser's local storage. The only outbound calls are ones you trigger yourself: bringing in a game from Lichess or Chess.com, or fetching an extra Lichess puzzle. If you self-host with your own LLM key for richer coaching text, the structured review data for that one request goes to the provider you configured, never anywhere else, and never by default.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>How is this different from Chess.com's Game Review?<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M9 6l6 6-6 6V6z"/></svg></summary>
+          <div class="faq-answer"><p>A game review gives you a strong per-move evaluation and a short comment on the position you just finished. Ramify does that too, then keeps going: it names the recurring reason a mistake keeps happening, not just in this game but across all of them, and turns it into a scheduled drill until it stops. It also has an answer for the moment theory runs out, which a single game's review was never trying to solve.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-links">
+      <a href="https://github.com/RagnarPitla/chess-local-learning">GitHub</a>
+      <a href="./index.html">Open Ramify</a>
+    </div>
+    <p class="footer-credits">
+      Ramify is developed in the open as
+      <a href="https://github.com/RagnarPitla/chess-local-learning">chess-local-learning</a>,
+      licensed <a href="https://github.com/RagnarPitla/chess-local-learning/blob/main/LICENSE">MIT</a>.
+      Built on <a href="https://stockfishchess.org/">Stockfish</a> (GPL v3),
+      <a href="https://github.com/jhlywa/chess.js">chess.js</a> (BSD-2-Clause) and
+      <a href="https://github.com/shaack/cm-chessboard">cm-chessboard</a> (MIT).
+      Opening data compiled from Lichess's
+      <a href="https://github.com/lichess-org/chess-openings">chess-openings</a>
+      dataset (CC0-1.0, public domain). Thank you to everyone who maintains these.
+    </p>
+    <p class="footer-note">Copyright and code (c) Ragnar Pitla. MIT licensed.</p>
+  </div>
+</footer>
+
+</body>
+</html>

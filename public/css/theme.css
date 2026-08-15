@@ -1,0 +1,277 @@
+/*
+ * theme.css - token layer for Chess Local Learning
+ * ---------------------------------------------------------------------
+ * This is the design system foundation: custom properties, a light CSS
+ * reset, base typography, focus rings, and reduced-motion handling.
+ * It owns no component rules - those live in styles.css, which imports
+ * this file and consumes the tokens defined here.
+ *
+ * Source of truth for the colour tokens: the compiled CSS of
+ * https://rbuild.ai, a shadcn/ui site running the stock "neutral"
+ * greyscale theme. Values are reproduced exactly (see docs/DESIGN.md for
+ * hex/HSL pairs and rationale). Five extra tokens (--good, --inaccuracy,
+ * --mistake, --blunder, --brilliant) are added on top for chess move
+ * feedback; they are the only colour allowed outside the neutral scale.
+ *
+ * No @import, no external fonts, no build step. Plain CSS custom
+ * properties so any other stylesheet or inline style in this app can
+ * read them.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ---------------------------------------------------------- surfaces */
+  --background: #ffffff;         /* hsl(0 0% 100%) */
+  --foreground: #0a0a0a;         /* hsl(0 0% 3.9%) */
+  --card: #ffffff;               /* hsl(0 0% 100%) */
+  --card-foreground: #0a0a0a;    /* hsl(0 0% 3.9%) */
+  --popover: #ffffff;            /* hsl(0 0% 100%) */
+  --popover-foreground: #0a0a0a; /* hsl(0 0% 3.9%) */
+
+  /* ---------------------------------------------------------- actions */
+  --primary: #171717;            /* hsl(0 0% 9%) */
+  --primary-foreground: #fafafa; /* hsl(0 0% 98%) */
+  --secondary: #f5f5f5;          /* hsl(0 0% 96.1%) */
+  --secondary-foreground: #171717; /* hsl(0 0% 9%) */
+
+  /* ------------------------------------------------------- neutral fill */
+  --muted: #f5f5f5;              /* hsl(0 0% 96.1%) */
+  --muted-foreground: #737373;   /* hsl(0 0% 45.1%) */
+  --accent: #f5f5f5;             /* hsl(0 0% 96.1%) */
+  --accent-foreground: #171717;  /* hsl(0 0% 9%) */
+
+  /* ------------------------------------------------------------ status */
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+
+  /* --------------------------------------------------------- structure */
+  --border: #e5e5e5;             /* hsl(0 0% 89.8%) */
+  --input: #e5e5e5;              /* hsl(0 0% 89.8%) */
+  --ring: #0a0a0a;                /* hsl(0 0% 3.9%) */
+  --radius: 0.5rem;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-full: 999px;
+
+  /* ------------------------------------------------------- chess status
+   * The only colour permitted outside the neutral scale above. Used as
+   * small dots, chips and labels only - never as decoration, backgrounds
+   * or large fills. --good/--inaccuracy/--mistake darkened one Tailwind
+   * step from the owner's reference swatch so 13-15px label text clears
+   * WCAG AA (4.5:1) on white; see docs/DESIGN.md "Accessibility" for the
+   * measured ratios. --blunder and --brilliant already cleared AA at the
+   * reference value, so they are unchanged.
+   */
+  --good: #15803d;        /* was #16a34a, darkened for AA text contrast */
+  --inaccuracy: #b45309;  /* was #d97706, darkened for AA text contrast */
+  --mistake: #c2410c;     /* was #ea580c, darkened for AA text contrast */
+  --blunder: #dc2626;     /* unchanged, already AA at this value */
+  --brilliant: #0a0a0a;   /* unchanged: identical to --foreground on purpose,
+                             see docs/DESIGN.md "monochrome marker language" */
+
+  /* ------------------------------------------------------------- fonts */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* --------------------------------------------------------- type scale */
+  --text-xs: 0.75rem;    /* 12px - fine print, uppercase micro-labels */
+  --text-sm: 0.8125rem;  /* 13px - meta text, captions, table cells */
+  --text-base: 0.9375rem;/* 15px - body copy */
+  --text-md: 1rem;       /* 16px - card titles, sub-headings */
+  --text-lg: 1.0625rem;  /* 17px - emphasised body, drill prompts */
+  --text-xl: 1.25rem;    /* 20px - page title */
+  --text-2xl: 1.5rem;    /* 24px - large numerals, empty-state headings */
+  --text-3xl: 1.875rem;  /* 30px - reserved for marketing-scale moments */
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* ------------------------------------------------------ spacing scale
+   * 4px base grid. Used for padding/gap/margin across styles.css so
+   * rhythm stays consistent as new components are added.
+   */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+
+  /* ---------------------------------------------------------- shadows
+   * Minimal by design: the brief for this theme is "minimal or no
+   * shadows". These two tokens are the only elevation used anywhere,
+   * reserved for cards floating a hair off the page background.
+   */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+}
+
+/* ============================================================= dark mode
+ * Optional, tasteful, still-monochrome inversion. Light is the default
+ * and the designed-for case; this block only ever runs when the OS/
+ * browser reports a dark preference, and it keeps the exact same
+ * structure (a straight neutral inversion), not a different design.
+ * Semantic status colours move to lighter tints of the same hues so
+ * they keep AA contrast on the dark background (see docs/DESIGN.md).
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --card: #171717;
+    --card-foreground: #fafafa;
+    --popover: #171717;
+    --popover-foreground: #fafafa;
+
+    --primary: #fafafa;
+    --primary-foreground: #171717;
+    --secondary: #262626;
+    --secondary-foreground: #fafafa;
+
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --accent: #262626;
+    --accent-foreground: #fafafa;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #fafafa;
+
+    --border: #262626;
+    --input: #262626;
+    --ring: #d4d4d4;
+
+    --good: #4ade80;
+    --inaccuracy: #fbbf24;
+    --mistake: #fb923c;
+    --blunder: #f87171;
+    --brilliant: #fafafa;
+
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  }
+}
+
+/* ==================================================================
+   Light reset - minimal, dependency-free, scoped to what this app
+   actually uses. Component rules that need something more specific
+   live in styles.css and win the cascade because that file loads
+   after this one.
+   ================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd {
+  margin: 0;
+}
+
+ul, ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img, picture, svg, video, canvas {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* ==================================================================
+   Base typography
+   ================================================================== */
+
+html, body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, kbd, pre, samp {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* ==================================================================
+   Focus rings - keyboard-only, using --ring. Mouse/touch interaction
+   never shows the ring, so clicking a button does not flash an
+   outline, but tabbing through the app always does.
+   ================================================================== */
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ==================================================================
+   Motion - respect the OS-level reduced-motion preference everywhere,
+   including third-party animation (cm-chessboard piece slides).
+   ================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

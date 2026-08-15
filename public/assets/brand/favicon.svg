@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Ramify logo mark: a faceted pawn silhouette">
+  <title>Ramify</title>
+  <!-- Bold, solid-black low-poly pawn silhouette: every edge is a straight
+       facet line rather than a curve, per the faceted / woodcut visual
+       language used across the brand. Reads clearly down to 16px. -->
+  <path fill="#0a0a0a" d="M50,14 L59.9,18.1 L64,28 L59.9,37.9 L58,44 L68,70 L72,75 L80,88 L20,88 L28,75 L32,70 L42,44 L40.1,37.9 L36,28 L40.1,18.1 Z"/>
+</svg>

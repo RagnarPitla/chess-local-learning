@@ -15,6 +15,7 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
+import { resolveCoachConfig, callCoachProvider, validateCoachRequestBody, COACH_BODY_ERROR } from './lib/coach-prompts.js'
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC_DIR = path.join(ROOT, 'public')
@@ -38,7 +39,7 @@ const ISOLATION_HEADERS = NEEDS_ISOLATION
   ? { 'cross-origin-opener-policy': 'same-origin', 'cross-origin-embedder-policy': 'require-corp' }
   : {}
 
-const COACH = resolveCoachConfig()
+const COACH = resolveCoachConfig(process.env)
 
 /** Public URL prefix -> absolute directory it is allowed to read from. */
 const VENDOR_MOUNTS = {
@@ -105,8 +106,8 @@ async function handleApi(req, res, pathname) {
 
   if (pathname === '/api/coach' && req.method === 'POST') {
     const body = await readJson(req)
-    if (!body || typeof body.kind !== 'string') {
-      return sendJson(res, 400, { ok: false, error: 'expected { kind, data }' })
+    if (!validateCoachRequestBody(body)) {
+      return sendJson(res, 400, { ok: false, error: COACH_BODY_ERROR })
     }
     if (!COACH) {
       return sendJson(res, 200, { ok: false, reason: 'no-key', text: null })
@@ -116,7 +117,7 @@ async function handleApi(req, res, pathname) {
       return sendJson(res, 200, { ok: true, text: coachCache.get(key), cached: true, provider: COACH.provider })
     }
     try {
-      const text = await callCoach(body.kind, body.data)
+      const text = await callCoachProvider(COACH, body.kind, body.data)
       rememberCoach(key, text)
       return sendJson(res, 200, { ok: true, text, provider: COACH.provider, model: COACH.model })
     } catch (err) {
@@ -149,95 +150,6 @@ async function handleApi(req, res, pathname) {
 }
 
 /* ------------------------------------------------------------------ coach */
-
-function resolveCoachConfig() {
-  if (process.env.ANTHROPIC_API_KEY) {
-    return {
-      provider: 'anthropic',
-      key: process.env.ANTHROPIC_API_KEY,
-      model: process.env.COACH_MODEL || 'claude-sonnet-4-5',
-    }
-  }
-  if (process.env.OPENAI_API_KEY) {
-    return {
-      provider: 'openai',
-      key: process.env.OPENAI_API_KEY,
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-    }
-  }
-  return null
-}
-
-const BASE_SYSTEM = `You are a chess coach for an adult improver who learns by understanding, not memorisation.
-
-Hard rules:
-- Explain WHY a move works using concrete features: pawn structure, piece activity, weak squares, king safety, tempo, material.
-- Never tell the student to "memorise" a line. If you cite a line, give the idea behind it.
-- Be concrete about squares and pieces (e.g. "the bishop on c8 is boxed in by the pawn on e6").
-- Never invent moves. Only reference moves and evaluations present in the supplied data.
-- Evaluations are centipawns from the student's point of view. Positive means the student is better.
-- Plain text with short paragraphs and hyphen bullets. No markdown headers, no tables, no emoji.
-- British-neutral plain English, direct, no filler or praise padding.`
-
-const KIND_PROMPTS = {
-  'game-review': `Task: review one game. Output exactly these sections as plain lines:
-"What decided the game:" one or two sentences.
-"Your three costliest moments:" one bullet per mistake supplied - name the move, what it allowed, and the principle that was broken.
-"The pattern:" one bullet naming the single recurring weakness across those moments.
-"Drill this week:" one concrete, repeatable habit (a checklist question the student asks before moving).
-Maximum 260 words.`,
-  'move-explain': `Task: explain one move the student got wrong. Cover, in order: what the played move overlooks, why the engine's move is stronger in terms of position not calculation, and the general rule this position teaches. Maximum 130 words.`,
-  deviation: `Task: the opponent has just left known opening theory. The student panics here because their preparation was a memorised tree.
-Cover, in order: what the opponent's move actually changes about the position (structure, space, development, weaknesses it creates or concedes), the correct plan derived from first principles, and one concrete candidate move with its idea.
-Do not say "this is a sideline" or refer to theory names as the answer. Maximum 150 words.`,
-  'puzzle-explain': `Task: the student attempted a puzzle drawn from their own game. Explain why the solution works and, if they answered wrong, what visual cue they missed that would have flagged it. Maximum 120 words.`,
-  lesson: `Task: write a short targeted lesson on the supplied weakness pattern, using the student's own positions as evidence. Cover: how to recognise the pattern on the board, why it costs material or position, and a three-step checklist to avoid it. Maximum 220 words.`,
-}
-
-async function callCoach(kind, data) {
-  const instruction = KIND_PROMPTS[kind] || KIND_PROMPTS['move-explain']
-  const system = `${BASE_SYSTEM}\n\n${instruction}`
-  const user = `Here is the position data as JSON:\n\n${JSON.stringify(data, null, 2)}`
-
-  if (COACH.provider === 'anthropic') {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': COACH.key,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: COACH.model,
-        max_tokens: 1200,
-        temperature: 0.4,
-        system,
-        messages: [{ role: 'user', content: user }],
-      }),
-    })
-    if (!r.ok) throw new Error(`anthropic ${r.status}: ${(await r.text()).slice(0, 300)}`)
-    const json = await r.json()
-    return (json.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim()
-  }
-
-  const r = await fetch(`${COACH.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${COACH.key}` },
-    body: JSON.stringify({
-      model: COACH.model,
-      temperature: 0.4,
-      max_tokens: 1200,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-    }),
-  })
-  if (!r.ok) throw new Error(`openai ${r.status}: ${(await r.text()).slice(0, 300)}`)
-  const json = await r.json()
-  return (json.choices?.[0]?.message?.content || '').trim()
-}
 
 function rememberCoach(key, text) {
   coachCache.set(key, text)

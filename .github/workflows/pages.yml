@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; a newer push supersedes an
+# in-flight one rather than queuing behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # This repo (RagnarPitla/chess-local-learning) is a GitHub Pages
+      # PROJECT site, served from https://ragnarpitla.github.io/chess-local-learning/
+      # (a sub-path, not the domain root) - so every root-absolute URL in
+      # the built output must be prefixed with this base.
+      - name: Build static site for GitHub Pages
+        run: node scripts/build-static.mjs --base=/chess-local-learning/
+
+      - name: Verify static build output (deploy safety net)
+        run: node scripts/build-static.mjs --check --base=/chess-local-learning/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

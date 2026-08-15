@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 627" width="1200" height="627">
+  <title>Chess Local Learning - social card (LinkedIn)</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="627" fill="#ffffff"/>
+  <rect x="20" y="20" width="1160" height="587" rx="12" fill="none" stroke="#e5e5e5" stroke-width="2"/>
+
+  <text x="64" y="106" font-size="20" font-weight="600" letter-spacing="2" fill="#737373">BUILT BY AN AI AGENT FLEET - FREE AND OPEN SOURCE</text>
+
+  <text x="62" y="208" font-size="68" font-weight="700" fill="#0a0a0a">Chess Local Learning</text>
+
+  <text x="64" y="262" font-size="28" fill="#404040">An open-source chess trainer designed, built and tested</text>
+  <text x="64" y="300" font-size="28" fill="#404040">by AI agents working in parallel on the same codebase.</text>
+
+  <line x1="64" y1="518" x2="1136" y2="518" stroke="#e5e5e5" stroke-width="1"/>
+  <text x="64" y="556" font-size="20" fill="#737373">github.com/RagnarPitla/chess-local-learning - rbuild.ai</text>
+  <text x="1136" y="556" font-size="20" fill="#737373" text-anchor="end">MIT licensed</text>
+
+  <!-- faceted low-poly rook mark -->
+  <g transform="translate(900,150) scale(1.3)">
+    <polygon points="50,225 100,225 100,205 60,205" fill="#0a0a0a"/>
+    <polygon points="100,225 150,225 140,205 100,205" fill="#171717"/>
+    <polygon points="60,205 100,205 96,90 72,90" fill="#0a0a0a"/>
+    <polygon points="100,205 140,205 128,90 96,90" fill="#171717"/>
+    <polygon points="55,90 100,90 100,65 55,65" fill="#0a0a0a"/>
+    <polygon points="100,90 145,90 145,65 100,65" fill="#171717"/>
+    <rect x="55" y="40" width="22" height="25" fill="#0a0a0a"/>
+    <rect x="89" y="40" width="22" height="25" fill="#0a0a0a"/>
+    <rect x="123" y="40" width="22" height="25" fill="#171717"/>
+    <g stroke="#ffffff" stroke-width="1.5">
+      <line x1="100" y1="225" x2="100" y2="205"/>
+      <line x1="100" y1="205" x2="96" y2="90"/>
+      <line x1="100" y1="90" x2="100" y2="65"/>
+    </g>
+  </g>
+</svg>

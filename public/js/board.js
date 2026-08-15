@@ -31,7 +31,7 @@ export class Board {
         borderType: BORDER_TYPE.frame,
         showCoordinates: true,
         animationDuration: 200,
-        pieces: { file: 'pieces/staunty.svg' },
+        pieces: { file: new URL('../assets/pieces/faceted.svg', import.meta.url).href },
       },
       extensions: [
         { class: Markers, props: { autoMarkers: MARKER_TYPE.framePrimary } },

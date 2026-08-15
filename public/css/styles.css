@@ -1,149 +1,209 @@
+/*
+ * styles.css - component layer for Chess Local Learning
+ * ---------------------------------------------------------------------
+ * Rewritten for the light, monochrome design system. This file consumes
+ * the tokens in theme.css (imported below) and keeps every selector and
+ * custom property name that existed in the previous dark theme, because
+ * other in-flight JS modules build DOM against those exact names. Only
+ * VALUES change; nothing is renamed or removed. New sections at the
+ * bottom cover the cm-chessboard vendor overrides and the newer
+ * component prefixes (pgr-, imp-, lib-) landing from other agents.
+ *
+ * See docs/DESIGN.md for the full rationale, contrast numbers and the
+ * monochrome marker language explained end to end.
+ */
+
+@import url("theme.css");
+
+/* ============================================================ legacy
+ * variable aliases
+ * ---------------------------------------------------------------------
+ * Every custom property that existed before the retheme is kept and
+ * pointed at the new token that plays the same ROLE (not necessarily
+ * the same name) in the shadcn palette. Concretely:
+ *  - --bg/--bg-raised/--bg-input/--line/--text map 1:1 to the new
+ *    surface tokens.
+ *  - --muted used to be a TEXT colour, so it aliases to
+ *    --muted-foreground, not to the new --muted (a background tint) -
+ *    aliasing it the other way would render all "muted" text almost
+ *    invisible on white.
+ *  - --accent used to be the vivid blue interactive colour (buttons,
+ *    focus, active tab, progress fill). Its ROLE is "primary emphasis",
+ *    which is shadcn's --primary, not shadcn's --accent (a pale grey
+ *    hover tint with an unrelated job).
+ *  - --warn/--bad map to the new --mistake/--blunder severity tiers.
+ *  - progress.js (owned by another agent) hardcodes inline styles such
+ *    as `color: 'var(--muted)'` and `stroke: 'var(--good)'` by NAME, so
+ *    these aliases are load-bearing, not cosmetic.
+ * ============================================================ */
+
 :root {
-  --bg: #12141a;
-  --bg-raised: #1a1d26;
-  --bg-input: #22262f;
-  --line: #2c313d;
-  --text: #e6e8ee;
-  --muted: #98a0b3;
-  --accent: #6ea8fe;
-  --good: #5dd39e;
-  --warn: #e9b949;
-  --bad: #f0705f;
-  --radius: 10px;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --bg: var(--background);
+  --bg-raised: var(--card);
+  --bg-input: var(--secondary);
+  --line: var(--border);
+  --text: var(--foreground);
+  --muted: var(--muted-foreground);
+  --accent: var(--primary);
+  --good: #15803d;      /* same literal value as the token in theme.css */
+  --warn: var(--mistake);
+  --bad: var(--blunder);
+  --radius: 0.5rem;      /* same literal value as the token in theme.css */
+  --mono: var(--font-mono);
 }
+
+/* =============================================================== base */
 
 * { box-sizing: border-box; }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
+body { min-height: 100vh; }
 
 h1, h2, h3 { margin: 0; font-weight: 600; }
-h1 { font-size: 18px; }
-h2 { font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
-h3 { font-size: 16px; margin: 6px 0; }
-p { margin: 8px 0; }
+h1 { font-size: var(--text-xl); }
+h2 { font-size: var(--text-sm); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+h3 { font-size: var(--text-md); margin: var(--space-2) 0; }
+p { margin: var(--space-2) 0; }
+
+/* ============================================================== topbar */
 
 .topbar {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 14px 22px; border-bottom: 1px solid var(--line); background: var(--bg-raised);
-  flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--line);
+  background: var(--bg-raised); flex-wrap: wrap;
 }
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: var(--space-3); }
 .brand-mark { font-size: 30px; line-height: 1; }
-.tagline { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.tagline { margin: 2px 0 0; color: var(--muted); font-size: var(--text-sm); }
 
-.pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pills { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .pill {
-  font: 12px/1 var(--mono); padding: 7px 10px; border-radius: 999px;
-  background: var(--bg-input); border: 1px solid var(--line); color: var(--muted);
+  font: var(--text-xs)/1 var(--mono); padding: 7px 10px; border-radius: var(--radius-full);
+  background: var(--bg-input); border: 1px solid var(--line); color: var(--secondary-foreground);
 }
-.pill[data-state="ok"] { color: var(--good); border-color: rgba(93, 211, 158, .35); }
-.pill[data-state="warn"] { color: var(--warn); border-color: rgba(233, 185, 73, .35); }
-.pill[data-state="bad"] { color: var(--bad); border-color: rgba(240, 112, 95, .35); }
+.pill[data-state="ok"] { background: var(--card); color: var(--good); border-color: var(--good); }
+.pill[data-state="warn"] { background: var(--card); color: var(--warn); border-color: var(--warn); }
+.pill[data-state="bad"] { background: var(--card); color: var(--bad); border-color: var(--bad); }
+
+/* ============================================================== layout */
 
 .layout {
   display: grid; grid-template-columns: minmax(320px, 1fr) minmax(360px, 480px);
-  gap: 22px; padding: 22px; align-items: start; max-width: 1400px; margin: 0 auto;
+  gap: var(--space-6); padding: var(--space-6); align-items: start;
+  max-width: 1400px; margin: 0 auto;
 }
+.board-col, .side-col { min-width: 0; }
 @media (max-width: 940px) { .layout { grid-template-columns: 1fr; } }
 
 /* ------------------------------------------------------------------ board */
 
-.board-col { position: sticky; top: 22px; }
+.board-col { position: sticky; top: var(--space-6); }
 @media (max-width: 940px) { .board-col { position: static; } }
 
-.board-wrap { display: flex; gap: 10px; align-items: stretch; }
-.board { flex: 1; max-width: 620px; }
+.board-wrap { display: flex; gap: var(--space-2); align-items: stretch; }
+.board { flex: 1; min-width: 0; max-width: 620px; }
 
 .evalbar {
-  position: relative; width: 16px; border-radius: 8px; overflow: hidden;
-  background: #0e1014; border: 1px solid var(--line); flex: 0 0 auto;
+  position: relative; width: 16px; border-radius: var(--radius-sm); overflow: hidden;
+  background: var(--bg-input); border: 1px solid var(--line); flex: 0 0 auto;
 }
 .evalbar-fill {
   position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
-  background: #eef1f6; transition: height .35s ease;
+  background: var(--text); transition: height .35s ease;
 }
+@media (prefers-reduced-motion: reduce) { .evalbar-fill { transition: none; } }
 .evalbar-label {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-90deg);
-  font: 10px/1 var(--mono); color: var(--accent); text-shadow: 0 0 4px #000; pointer-events: none;
+  font: 10px/1 var(--mono); color: var(--text); pointer-events: none;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-full);
+  padding: 1px 5px;
 }
 
-.board-caption { color: var(--muted); font-size: 14px; min-height: 22px; }
-.board-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.board-caption { color: var(--muted); font-size: var(--text-sm); min-height: 22px; }
+.board-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
 /* ------------------------------------------------------------------ panels */
 
-.tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.tabs {
+  display: flex; gap: 2px; margin-bottom: var(--space-4); border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
 .tab {
   background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted);
-  padding: 9px 14px; font-size: 14px; cursor: pointer; font-weight: 500;
+  padding: 9px 14px; font-size: var(--text-sm); cursor: pointer; font-weight: 500;
+  white-space: nowrap;
 }
 .tab:hover { color: var(--text); }
-.tab.is-active { color: var(--text); border-bottom-color: var(--accent); }
+.tab.is-active { color: var(--text); border-bottom-color: var(--text); }
 
-.panel { display: none; flex-direction: column; gap: 14px; }
+.panel { display: none; flex-direction: column; gap: var(--space-4); }
 .panel.is-active { display: flex; }
 
 .card {
   background: var(--bg-raised); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 16px;
+  border-radius: var(--radius); padding: var(--space-4);
+  overflow-x: auto; /* safety net so wide tables/grids never blow out narrow layouts */
 }
-.card.alert { border-color: rgba(233, 185, 73, .45); background: #1e1c17; }
-.card > h2 { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.card.alert {
+  background: var(--card); border-color: var(--line);
+  border-left: 3px solid var(--warn);
+}
+.card > h2 { margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2); }
 
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
-.small { font-size: 13px; }
+.small { font-size: var(--text-sm); }
 
 /* ------------------------------------------------------------------ forms */
 
-.form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-.form-row label { font-size: 13px; color: var(--muted); }
-.checkline { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--space-3); }
+.form-row label { font-size: var(--text-sm); color: var(--muted); }
+.checkline { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
 
 select, input[type="range"] {
   background: var(--bg-input); color: var(--text); border: 1px solid var(--line);
-  border-radius: 8px; padding: 8px 10px; font-size: 14px; width: 100%;
+  border-radius: var(--radius-md); padding: 8px 10px; font-size: var(--text-base); width: 100%;
 }
 textarea {
   background: var(--bg-input); color: var(--text); border: 1px solid var(--line);
-  border-radius: 8px; padding: 9px 10px; font-size: 13px; width: 100%;
-  font-family: var(--mono); resize: vertical; margin-bottom: 10px;
+  border-radius: var(--radius-md); padding: 9px 10px; font-size: var(--text-sm); width: 100%;
+  font-family: var(--mono); resize: vertical; margin-bottom: var(--space-3);
 }
-textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+/* :focus-visible (not :focus) so the keyboard ring from theme.css still
+   shows through - the old rule used :focus with outline:none, which
+   silently swallowed the accessible focus ring for these two fields. */
+textarea:focus-visible, select:focus-visible { border-color: var(--accent); }
 input[type="range"] { padding: 0; accent-color: var(--accent); }
 output { color: var(--text); font-family: var(--mono); }
 
 button {
-  border-radius: 8px; padding: 9px 14px; font-size: 14px; cursor: pointer;
+  border-radius: var(--radius-md); padding: 9px 14px; font-size: var(--text-base); cursor: pointer;
   border: 1px solid var(--line); background: var(--bg-input); color: var(--text);
   transition: background .15s ease, border-color .15s ease;
 }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }
 button:hover:not(:disabled) { border-color: var(--accent); }
 button:disabled { opacity: .45; cursor: not-allowed; }
-button.primary { background: var(--accent); border-color: var(--accent); color: #0b1220; font-weight: 600; }
-button.primary:hover:not(:disabled) { filter: brightness(1.08); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--primary-foreground); font-weight: 600; }
+button.primary:hover:not(:disabled) { filter: brightness(1.2); }
 button.danger:hover:not(:disabled) { border-color: var(--bad); color: var(--bad); }
 button.wide { width: 100%; }
-button.small { padding: 6px 10px; font-size: 13px; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+button.small { padding: 6px 10px; font-size: var(--text-sm); }
+/* .ghost: existing class in the HTML with no prior CSS rule at all -
+   a transparent/outline button for secondary actions next to .primary. */
+.ghost { background: transparent; border-color: var(--line); }
+.ghost:hover:not(:disabled) { background: var(--bg-input); border-color: var(--accent); }
+.row { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
 
 .chip {
-  font: 11px/1 var(--mono); padding: 5px 8px; border-radius: 999px;
-  background: var(--bg-input); border: 1px solid var(--line); color: var(--muted);
+  font: var(--text-xs)/1 var(--mono); padding: 5px 8px; border-radius: var(--radius-full);
+  background: var(--bg-input); border: 1px solid var(--line); color: var(--secondary-foreground);
   text-transform: none; letter-spacing: 0;
 }
-.chiprow { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.chiprow { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: var(--space-2); }
 
 /* ------------------------------------------------------------------ prose */
 
-.prose { white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+.prose { white-space: pre-wrap; font-size: var(--text-base); line-height: var(--leading-relaxed); }
 .prose::first-line { font-weight: 500; }
 
 /* --------------------------------------------------------------- movelist */
@@ -151,22 +211,31 @@ button.small { padding: 6px 10px; font-size: 13px; }
 .movelist {
   margin: 0; padding-left: 0; list-style: none; display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 2px 10px; font-family: var(--mono); font-size: 13px; max-height: 220px; overflow-y: auto;
+  gap: 2px 10px; font-family: var(--mono); font-size: var(--text-sm);
+  max-height: 220px; overflow-y: auto;
 }
-.movelist li { display: flex; gap: 6px; padding: 2px 4px; border-radius: 4px; }
+.movelist li { display: flex; gap: 6px; padding: 2px 4px; border-radius: var(--radius-sm); }
 .movelist .num { color: var(--muted); min-width: 26px; }
 .movelist .san { cursor: pointer; }
-.movelist .san:hover { color: var(--accent); }
+.movelist .san:hover { color: var(--accent); text-decoration: underline; }
 .movelist .blunder { color: var(--bad); }
 .movelist .mistake { color: var(--warn); }
-.movelist .inaccuracy { color: #d9b8ff; }
+.movelist .inaccuracy { color: var(--inaccuracy); }
+/* reserved: no move is classified "brilliant" yet, but the token and a
+   legible treatment are ready - see docs/DESIGN.md "monochrome marker
+   language". Plain colour would be invisible since --brilliant equals
+   --foreground, so brilliant moves get an inverted chip instead. */
+.movelist .brilliant {
+  font-weight: 700; background: var(--brilliant); color: var(--background);
+  border-radius: var(--radius-sm); padding: 0 4px;
+}
 
 /* ------------------------------------------------------------------ stats */
 
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 10px; }
-.stat { background: var(--bg-input); border-radius: 8px; padding: 10px; text-align: center; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2); }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-2); text-align: center; }
 .stat .v { font: 600 20px/1.2 var(--mono); }
-.stat .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.stat .k { font-size: var(--text-xs); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .stat.bad .v { color: var(--bad); }
 .stat.warn .v { color: var(--warn); }
 .stat.good .v { color: var(--good); }
@@ -175,40 +244,333 @@ button.small { padding: 6px 10px; font-size: 13px; }
 
 .mistakes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .mistakes li {
-  display: flex; align-items: center; gap: 10px; padding: 9px 10px; cursor: pointer;
-  background: var(--bg-input); border: 1px solid transparent; border-radius: 8px; font-size: 14px;
+  display: flex; align-items: center; gap: var(--space-3); padding: 9px 10px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); font-size: var(--text-base);
 }
 .mistakes li:hover { border-color: var(--accent); }
-.mistakes li.is-active { border-color: var(--accent); background: #232a38; }
+.mistakes li.is-active { border-color: var(--accent); background: var(--bg-input); }
 .mistakes .move { font-family: var(--mono); min-width: 76px; }
-.mistakes .loss { margin-left: auto; font-family: var(--mono); font-size: 13px; }
+.mistakes .loss { margin-left: auto; font-family: var(--mono); font-size: var(--text-sm); }
 .mistakes .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
 .dot.blunder { background: var(--bad); }
 .dot.mistake { background: var(--warn); }
-.dot.inaccuracy { background: #b18aff; }
+.dot.inaccuracy { background: var(--inaccuracy); }
+.dot.good { background: var(--good); }
+/* reserved for future "brilliant" classification - see .movelist .brilliant
+   above for why plain colour does not work. A dot cannot hold text, so
+   the differentiator here is a halo ring built from two box-shadows
+   instead of a chip: black dot, a card-coloured gap, a thin black ring. */
+.dot.brilliant {
+  background: var(--brilliant);
+  box-shadow: 0 0 0 2px var(--card), 0 0 0 3px var(--brilliant);
+}
 
-.detail { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
-.taglist { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.detail { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--line); }
+.taglist { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--space-2) 0; }
 
 /* ----------------------------------------------------------------- drills */
 
-.verdict { padding: 10px 12px; border-radius: 8px; font-size: 14px; margin: 10px 0; }
-.verdict.ok { background: rgba(93, 211, 158, .12); border: 1px solid rgba(93, 211, 158, .4); color: var(--good); }
-.verdict.no { background: rgba(240, 112, 95, .12); border: 1px solid rgba(240, 112, 95, .4); color: var(--bad); }
+.verdict {
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: var(--text-base);
+  margin: var(--space-3) 0; background: var(--card); border: 1px solid var(--line);
+  border-left: 3px solid var(--muted);
+}
+.verdict.ok { border-left-color: var(--good); color: var(--good); }
+.verdict.no { border-left-color: var(--bad); color: var(--bad); }
 
 /* --------------------------------------------------------------- weakness */
 
-.weaknesses { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.weaknesses li { background: var(--bg-input); border-radius: 8px; padding: 12px; }
-.weaknesses .head { display: flex; align-items: baseline; gap: 8px; }
+.weaknesses { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.weaknesses li { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-3); }
+.weaknesses .head { display: flex; align-items: baseline; gap: var(--space-2); }
 .weaknesses .label { font-weight: 600; }
-.weaknesses .meta { margin-left: auto; font: 12px/1 var(--mono); color: var(--muted); }
-.bar { height: 5px; border-radius: 3px; background: #2f3441; margin: 9px 0 6px; overflow: hidden; }
-.bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--warn), var(--bad)); }
+.weaknesses .meta { margin-left: auto; font: var(--text-xs)/1 var(--mono); color: var(--muted); }
+.bar { height: 5px; border-radius: 3px; background: var(--bg-input); margin: 9px 0 6px; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--text); }
 
-.progress { height: 6px; border-radius: 3px; background: #2f3441; overflow: hidden; margin: 10px 0; }
+.progress { height: 6px; border-radius: 3px; background: var(--bg-input); overflow: hidden; margin: var(--space-3) 0; }
 .progress-fill { height: 100%; width: 0; background: var(--accent); transition: width .2s ease; }
+@media (prefers-reduced-motion: reduce) { .progress-fill { transition: none; } }
 
-.spark { width: 100%; height: 60px; margin-top: 10px; }
+/* ------------------------------------------------------------------ spark
+ * Chart/trend strokes are intentionally forced to a single neutral ink
+ * colour here. progress.js sets its own inline stroke ("var(--good)" /
+ * "var(--bad)") on some polylines, but a CSS class rule always wins
+ * over an SVG presentation attribute - so this is a deliberate design
+ * choice, not an accident: a decorative trend LINE is not one of the
+ * brief's permitted "dots, chips, labels", so every sparkline reads in
+ * the same restrained ink regardless of which module drew it. Each
+ * chart already carries its own text label, so colour was never the
+ * only way to tell two sparklines apart. */
+.spark { width: 100%; height: 60px; margin-top: var(--space-3); }
 .spark polyline { fill: none; stroke: var(--accent); stroke-width: 2; }
 .spark circle { fill: var(--accent); }
+
+/* ============================================================ cm-chessboard
+ * The vendor stylesheet (node_modules/cm-chessboard/assets/*.css) ships
+ * seven theme presets, all coloured (wood, green, blue...), scoped with
+ * selectors like ".cm-chessboard.chess-club .board .square.white". Since
+ * board.js (owned by another agent and edited concurrently) chooses the
+ * theme name and stylesheet load order, matching its exact selector
+ * shape for every preset would be fragile. !important is used narrowly
+ * here, only for this vendor override, which is the standard justified
+ * case for it: pinning a small set of third-party rules regardless of
+ * cascade position. Every value below is a neutral token - the board is
+ * monochrome no matter which of the seven preset names is active.
+ * ============================================================ */
+
+.cm-chessboard .board .square.white { fill: #fafafa !important; }
+.cm-chessboard .board .square.black { fill: #d4d4d4 !important; }
+.cm-chessboard .board .border {
+  fill: var(--card) !important;
+  stroke: var(--border) !important;
+  stroke-width: 0.7% !important;
+}
+.cm-chessboard .board .border-inner {
+  fill: var(--card) !important;
+  stroke: var(--border) !important;
+  stroke-width: 0.7% !important;
+}
+.cm-chessboard .coordinates .coordinate,
+.cm-chessboard .coordinates .coordinate.black,
+.cm-chessboard .coordinates .coordinate.white {
+  fill: var(--muted-foreground) !important;
+}
+
+/* -------------------------------------------------------- markers/arrows
+ * The "real design problem": last-move, selection, legal-move and
+ * check markers, plus hint/best-move/played-move arrows, must all be
+ * told apart without hue (only --foreground is used below). Two arrow
+ * types can render on the same square at the same time (the engine's
+ * best move and the move actually played, during review), so they are
+ * pushed to opposite ends of a weight/dash ladder:
+ *   ambient  - thin, low opacity, solid    - last move, legal square
+ *   emphasis - heavier, high opacity, solid - selection, best move,
+ *              correct drill answer
+ *   caution  - medium, sparse dash          - secondary warning state
+ *   danger   - heavier, dense dash          - the move actually played
+ *              (when flagged), reserved future "in check" marker
+ * Full detail and a worked example are in docs/DESIGN.md.
+ * ---------------------------------------------------------------- */
+
+.cm-chessboard .markers .marker.marker-frame {
+  stroke: var(--foreground) !important; stroke-width: 1.8px !important; opacity: 0.5 !important;
+}
+.cm-chessboard .markers .marker.marker-frame-primary,
+.cm-chessboard .markers .marker.marker-frame-info {
+  stroke: var(--foreground) !important; stroke-width: 2.2px !important; opacity: 0.85 !important;
+}
+.cm-chessboard .markers .marker.marker-frame-danger {
+  stroke: var(--foreground) !important; stroke-width: 1.8px !important;
+  stroke-dasharray: 3 2 !important; opacity: 0.9 !important;
+}
+.cm-chessboard .markers .marker.marker-frame-warning {
+  stroke: var(--foreground) !important; stroke-width: 1.8px !important;
+  stroke-dasharray: 1 2 !important; opacity: 0.7 !important;
+}
+.cm-chessboard .markers .marker.marker-circle {
+  stroke: var(--foreground) !important; stroke-width: 2px !important; opacity: 0.25 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-primary,
+.cm-chessboard .markers .marker.marker-circle-info {
+  stroke: var(--foreground) !important; stroke-width: 2.5px !important; opacity: 0.55 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-info-filled {
+  stroke: var(--foreground) !important; fill: var(--foreground) !important;
+  stroke-width: 2.5px !important; opacity: 0.55 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-danger {
+  stroke: var(--foreground) !important; stroke-width: 2.5px !important;
+  stroke-dasharray: 3 2 !important; opacity: 0.7 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-danger-filled {
+  stroke: var(--foreground) !important; fill: var(--foreground) !important;
+  stroke-width: 2px !important; opacity: 0.35 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-warning {
+  stroke: var(--foreground) !important; stroke-width: 2px !important;
+  stroke-dasharray: 1 2 !important; opacity: 0.6 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-warning-filled {
+  stroke: var(--foreground) !important; fill: var(--foreground) !important;
+  stroke-width: 2px !important; opacity: 0.3 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-success {
+  stroke: var(--foreground) !important; stroke-width: 2.5px !important; opacity: 0.55 !important;
+}
+.cm-chessboard .markers .marker.marker-circle-success-filled {
+  stroke: var(--foreground) !important; fill: var(--foreground) !important;
+  stroke-width: 2.5px !important; opacity: 0.5 !important;
+}
+.cm-chessboard .markers .marker.marker-square { fill: var(--foreground) !important; opacity: 0.06 !important; }
+.cm-chessboard .markers .marker.marker-dot { fill: var(--foreground) !important; opacity: 0.28 !important; }
+.cm-chessboard .markers .marker.marker-bevel { fill: var(--foreground) !important; opacity: 0.2 !important; }
+
+.cm-chessboard .arrow-info .arrow-head { fill: var(--foreground) !important; fill-opacity: 0.35 !important; }
+.cm-chessboard .arrow-info .arrow-line {
+  stroke: var(--foreground) !important; stroke-dasharray: 1 3 !important; opacity: 0.35 !important;
+}
+.cm-chessboard .arrow-success .arrow-head { fill: var(--foreground) !important; fill-opacity: 0.9 !important; }
+.cm-chessboard .arrow-success .arrow-line { stroke: var(--foreground) !important; opacity: 0.75 !important; }
+.cm-chessboard .arrow-danger .arrow-head { fill: var(--foreground) !important; fill-opacity: 0.55 !important; }
+.cm-chessboard .arrow-danger .arrow-line {
+  stroke: var(--foreground) !important; stroke-dasharray: 4 3 !important; opacity: 0.55 !important;
+}
+.cm-chessboard .arrow-warning .arrow-head { fill: var(--foreground) !important; fill-opacity: 0.6 !important; }
+.cm-chessboard .arrow-warning .arrow-line {
+  stroke: var(--foreground) !important; stroke-dasharray: 2 2 !important; opacity: 0.5 !important;
+}
+.cm-chessboard .arrow-secondary .arrow-head { fill: var(--muted-foreground) !important; fill-opacity: 0.8 !important; }
+.cm-chessboard .arrow-secondary .arrow-line { stroke: var(--muted-foreground) !important; opacity: 0.6 !important; }
+
+/* ================================================================ tables
+ * Generic element-level styling so a real <table> (e.g. library.js's
+ * games list) looks native with zero bespoke CSS. .card already adds
+ * overflow-x:auto as a blanket safety net for anything wider than its
+ * column at 375px.
+ * ================================================================ */
+
+table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+thead th {
+  text-align: left; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); font-weight: 600; padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+tbody td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--line); vertical-align: middle; }
+tbody tr:hover { background: var(--bg-input); }
+tbody tr:last-child td { border-bottom: 0; }
+/* a table cell that also carries .row (a flex action-button strip):
+   display:flex on a <td> keeps a table-cell outer display and only
+   changes the inner layout in current browsers, so the buttons lay out
+   in a row without unboxing the cell from the table. */
+td.row { margin-top: 0; }
+
+/* ============================================================= generic
+ * empty states - a big muted line plus optional action, for "no games
+ * yet", "no drills due", etc. New primitive, not previously used.
+ * ============================================================= */
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: var(--space-2); padding: var(--space-8) var(--space-4); color: var(--muted);
+}
+.empty-state .empty-icon { font-size: var(--text-2xl); opacity: 0.4; }
+.empty-state .empty-title { font-size: var(--text-base); font-weight: 600; color: var(--text); }
+.empty-state .empty-hint { font-size: var(--text-sm); }
+
+/* =========================================================== pgr-* cards
+ * progress.js: the mastery/XP dashboard. Reuses .card, .stat, .stats,
+ * .progress, .progress-fill, .primary, .wide, .muted, .small, .row,
+ * .spark; these rules cover what is specific to it.
+ * =========================================================== */
+
+.pgr-dashboard { display: flex; flex-direction: column; gap: var(--space-4); }
+.pgr-hero { display: flex; flex-direction: column; gap: var(--space-2); }
+.pgr-hero-title { font-size: var(--text-2xl); font-weight: 700; }
+.pgr-hero-reason { color: var(--muted); font-size: var(--text-sm); }
+.pgr-summary-row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.pgr-trend { display: flex; flex-direction: column; gap: var(--space-1); }
+.pgr-chart { display: flex; flex-direction: column; gap: var(--space-1); }
+
+.pgr-mastery-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: var(--space-2);
+}
+.pgr-mastery-tile {
+  border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-2);
+  text-align: center; background: var(--card);
+}
+/* mastery level differentiated by fill weight/opacity, not hue - keeps
+   the same "no colour as decoration" rule as the board markers.
+   progress.js also sets an inline "border-left: 3px solid <colour>" on
+   this tile using the old --muted/--bad/--warn/--accent/--good variable
+   names (see the alias block at the top of this file). That inline left
+   edge always wins over this stylesheet, so each state below repeats the
+   same variable on all 4 sides deliberately, so the inline left edge and
+   this rule's other 3 edges agree instead of showing two different hues. */
+.pgr-mastery-tile[data-level="unseen"] { background: var(--card); opacity: 0.55; border-color: var(--muted); }
+.pgr-mastery-tile[data-level="weak"] { border-color: var(--bad); border-width: 1.5px; }
+.pgr-mastery-tile[data-level="improving"] { border-style: dashed; border-color: var(--warn); }
+.pgr-mastery-tile[data-level="solid"] { border-color: var(--accent); }
+.pgr-mastery-tile[data-level="mastered"] { background: var(--text); color: var(--background); }
+.pgr-mastery-tile[data-level="mastered"] .pgr-mastery-label,
+.pgr-mastery-tile[data-level="mastered"] .pgr-mastery-evidence { color: var(--background); }
+.pgr-mastery-label { font-size: var(--text-xs); font-weight: 600; }
+.pgr-mastery-level { display: block; font-weight: 600; margin-top: 2px; }
+.pgr-mastery-evidence { font-size: var(--text-xs); color: var(--muted); margin-top: 2px; }
+
+.pgr-track-row {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.pgr-track-row:last-child { border-bottom: 0; }
+.pgr-track-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); flex: 1; }
+.pgr-track-name { font-weight: 600; font-size: var(--text-sm); }
+
+.pgr-due-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.pgr-due-item {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-md);
+}
+.pgr-empty { text-align: center; padding: var(--space-6); color: var(--muted); }
+
+/* =========================================================== imp-* cards
+ * import.js: PGN/game import UI. Reuses .card, .form-row, .ghost,
+ * .hidden, .muted, .small, .primary, .wide, .progress, .progress-fill,
+ * .row, .tab.
+ * =========================================================== */
+
+.imp-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.imp-drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-2); text-align: center; padding: var(--space-8) var(--space-4);
+  border: 1px dashed var(--line); border-radius: var(--radius-md); background: var(--card);
+  cursor: pointer; transition: border-color .15s ease, background .15s ease;
+}
+@media (prefers-reduced-motion: reduce) { .imp-drop { transition: none; } }
+.imp-drop.is-dragover { border-color: var(--text); background: var(--bg-input); }
+.imp-drop-icon { font-size: var(--text-2xl); color: var(--muted); }
+.imp-drop-text { color: var(--muted); font-size: var(--text-sm); }
+.imp-error-list { margin: var(--space-2) 0 0; padding-left: var(--space-5); list-style: disc; color: var(--bad); font-size: var(--text-sm); }
+.imp-file-input { display: none; }
+.imp-source-toggle { display: inline-flex; gap: 2px; border-bottom: 1px solid var(--line); }
+.imp-status { color: var(--muted); font-size: var(--text-sm); }
+.imp-progress { height: 6px; border-radius: 3px; background: var(--bg-input); overflow: hidden; margin: var(--space-3) 0; }
+.imp-progress-fill { height: 100%; width: 0; background: var(--accent); transition: width .2s ease; }
+@media (prefers-reduced-motion: reduce) { .imp-progress-fill { transition: none; } }
+
+/* =========================================================== lib-* cards
+ * library.js: games library, including a real <table class="lib-table">.
+ * Table look comes from the generic table rules above; this section is
+ * only what is specific to the library screen.
+ * =========================================================== */
+
+.lib-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.lib-toolbar { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.lib-pager-label { color: var(--muted); font-size: var(--text-sm); }
+.lib-queue-status { color: var(--muted); font-size: var(--text-sm); }
+.lib-empty { text-align: center; padding: var(--space-6); color: var(--muted); }
+.lib-pagination { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.lib-table { min-width: 640px; } /* keeps columns legible; .card overflow-x:auto handles narrow viewports */
+
+/* ============================================================ responsive
+ * The existing 940px breakpoint collapses the two-column layout to one.
+ * These two extra breakpoints tune spacing and density for tablet and
+ * small-phone widths without changing any selector.
+ * ============================================================ */
+
+@media (max-width: 768px) {
+  .layout { gap: var(--space-4); padding: var(--space-4); }
+  .topbar { padding: var(--space-3) var(--space-4); }
+  .card { padding: var(--space-3); }
+  .board { max-width: none; }
+}
+
+@media (max-width: 480px) {
+  .topbar { gap: var(--space-2); }
+  .tagline { display: none; }
+  .board-wrap { gap: 6px; }
+  .movelist { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); max-height: 160px; }
+  .stats, .pgr-mastery-grid { grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
+  button, .tab { font-size: var(--text-sm); }
+  .pgr-hero-title { font-size: var(--text-xl); }
+}
