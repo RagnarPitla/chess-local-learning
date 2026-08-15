@@ -1,0 +1,29 @@
+{
+  "name": "chess-local-learning",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Adaptive chess trainer: Stockfish WASM analysis + principle-based coaching that learns your personal weakness patterns",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test \"scripts/logic.test.js\"",
+    "test:e2e": "node scripts/smoke.mjs",
+    "test:all": "npm test && npm run test:e2e"
+  },
+  "keywords": [
+    "chess",
+    "stockfish",
+    "adaptive-learning",
+    "spaced-repetition"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "cm-chessboard": "^8.12.19",
+    "stockfish": "^18.0.8"
+  }
+}
