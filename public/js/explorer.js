@@ -146,7 +146,14 @@ export function classifyVariations(sanMoves = []) {
   return {
     position: {
       fen,
-      name: opening?.name ?? null,
+      // Contract: name is null only when the position is NOT in book (inBook
+      // false). Whenever inBook is true, name is always a real string - every
+      // in-book position resolves to at least its first move's ECO name,
+      // except the exact starting position (zero moves played, nothing has
+      // fixed an opening yet), which is labelled explicitly below instead of
+      // left null. A caller can therefore treat `inBook && !name` as
+      // impossible rather than needing to special-case ply 0 itself.
+      name: opening?.name ?? (sanMoves.length === 0 ? 'Starting Position' : null),
       eco: opening?.eco ?? null,
       plans: opening ? { struct: opening.struct, white: opening.white, black: opening.black, breaks: opening.breaks } : null,
       inherited: Boolean(opening?.inherited),
@@ -279,6 +286,22 @@ function tagPrinciples(move) {
 }
 
 /**
+ * Ranks a legal move that theory does not name, for when the book runs out
+ * and the training set has to be topped up from raw legal moves. Uses the
+ * classic "what to look for" calculation order - checks, then captures, then
+ * castling - ahead of quiet principled play. The gaps between tiers (1000
+ * apart) are far larger than tagPrinciples() can ever add (at most 3 tags),
+ * so a quiet move can never accidentally outrank a real tactical one.
+ */
+function tacticalWeight(move) {
+  if (move.san.includes('#')) return 4000
+  if (move.san.includes('+')) return 3000
+  if (move.captured) return 2000
+  if (move.flags.includes('k') || move.flags.includes('q')) return 1000
+  return 0
+}
+
+/**
  * Heuristic only: real sharpness is an engine/search question this module
  * cannot answer without one. Gambits and sacrifices are named as such in
  * ECO because they trade material for initiative, which is a reasonably
@@ -347,26 +370,42 @@ function buildFallbackCandidates(legalMoves) {
       isMain: false,
       principles: tagPrinciples(move),
       sharp: false,
+      tactical: tacticalWeight(move),
       structureKey: move.after ? pawnStructureKey(move.after) : move.san,
     }
   })
 }
 
-function scoreCandidate(candidate, level, inBook) {
-  let score = inBook ? candidate.entry.share * 100 : 0
-  score += candidate.principles.length * (inBook ? 6 : 15)
+/**
+ * Per-candidate score, used to rank within one pool (book candidates, or the
+ * legal-move top-up pool) - never across both, since the two pools are
+ * picked from separately (see pickFromPool). Book candidates are ranked by
+ * real popularity (`share`); top-up candidates have no popularity data, so
+ * they fall back to tacticalWeight() (checks/captures/castling first) plus a
+ * bigger nudge per principle, since there is nothing else to go on.
+ */
+function scoreCandidate(candidate, level) {
+  const isBook = candidate.entry.isBook
+  let score = isBook ? candidate.entry.share * 100 : candidate.tactical ?? 0
+  score += candidate.principles.length * (isBook ? 6 : 15)
   if (level === 'beginner' && candidate.sharp) score -= 60
   if (level === 'advanced' && candidate.sharp) score += 15
   if (level === 'expert' && candidate.sharp) score += 40
   return score
 }
 
-function explainWhy(candidate, level, inBook) {
-  if (!inBook) {
+/** `toppedUp` is true only when the book had SOME candidates but ran out
+ * before reaching the requested count - as opposed to the position being
+ * out of book from the very first move considered, which keeps its original
+ * wording unchanged below. */
+function explainWhy(candidate, level, toppedUp = false) {
+  if (!candidate.entry.isBook) {
     const reason = candidate.principles.length
       ? `it clearly illustrates ${candidate.principles.join(' and ')}`
       : 'it is a reasonable try worth judging on its own merits'
-    return `Not in the book from here - your opponent (or you) went off the map - but ${reason}, so it is a good move to think through.`
+    return toppedUp
+      ? `Theory runs out before this move - it is included so you have a full set to train on - but ${reason}, so it is worth thinking through.`
+      : `Not in the book from here - your opponent (or you) went off the map - but ${reason}, so it is a good move to think through.`
   }
   if (candidate.isMain) {
     return 'The main line: the most common and best-tested continuation from this position.'
@@ -388,29 +427,39 @@ function explainWhy(candidate, level, inBook) {
   return 'A known alternative that leads to a different structure, worth recognising so you are not surprised by it.'
 }
 
-function pickTrainingSet(candidates, target, level, inBook) {
-  if (!candidates.length) return []
+/**
+ * Ranks and selects up to `target` candidates from ONE pool (either the book
+ * candidates, or the legal-move top-up pool - never a mix; trainingVariations
+ * calls this once per pool so book material can never be crowded out by a
+ * topped-up legal move). `usedStructures` is shared across both calls so the
+ * top-up phase still prefers a pawn structure the book phase did not already
+ * use. `forceTop` takes the top-ranked candidate unconditionally first (used
+ * for the book pool, to guarantee the main line a slot); `forceSharpForExpert`
+ * additionally guarantees a sharp/critical pick at expert level when one
+ * exists in the pool (book pool only - top-up candidates are never sharp).
+ */
+function pickFromPool(candidates, target, level, usedStructures, { forceTop = false, forceSharpForExpert = false } = {}) {
+  if (!candidates.length || target <= 0) return []
 
   const ranked = candidates
-    .map((c) => ({ ...c, score: scoreCandidate(c, level, inBook) }))
+    .map((c) => ({ ...c, score: scoreCandidate(c, level) }))
     .sort((a, b) => {
-      if (inBook && a.isMain !== b.isMain) return a.isMain ? -1 : 1
+      if (forceTop && a.isMain !== b.isMain) return a.isMain ? -1 : 1
       return b.score - a.score
     })
 
   const chosen = []
-  const usedStructures = new Set()
   const take = (c) => {
     chosen.push(c)
     usedStructures.add(c.structureKey)
   }
 
-  // Rule: the main line always gets a slot (it sorts first whenever inBook).
-  if (inBook) take(ranked[0])
+  // Rule: the main line always gets a slot (it sorts first when forced).
+  if (forceTop) take(ranked[0])
 
   // Rule: expert level always gets at least one sharp/critical line, if the
-  // position actually has one, rather than leaving it to chance.
-  if (level === 'expert') {
+  // pool actually has one, rather than leaving it to chance.
+  if (forceSharpForExpert && level === 'expert') {
     const sharpPick = ranked.find((c) => c.sharp && !chosen.includes(c))
     if (sharpPick && chosen.length < target) take(sharpPick)
   }
@@ -424,24 +473,37 @@ function pickTrainingSet(candidates, target, level, inBook) {
   }
 
   // Backfill: if distinctness left slots open, a repeated structure still
-  // beats an empty panel - never show fewer than the position can support.
+  // beats an empty panel - never show fewer than the pool can support.
   for (const c of ranked) {
     if (chosen.length >= target) break
     if (chosen.includes(c)) continue
     take(c)
   }
 
-  return chosen.slice(0, target).map((c) => ({ ...c.entry, whyThisOne: explainWhy(c, level, inBook), level }))
+  return chosen.slice(0, target)
 }
 
 /**
  * The top `count` (clamped to 3..9) variations actually worth training on
  * from this position - a curated shortlist, not just the most popular moves.
  * Always includes the main line; fills remaining slots with structurally
- * distinct alternatives biased by `level` (see DIFFICULTY_PRESETS); falls
- * back to scoring every legal move on opening principles when the position
- * is out of book, so this never returns an empty list while any legal move
- * exists. `count` and `level` are independent - pass
+ * distinct alternatives biased by `level` (see DIFFICULTY_PRESETS).
+ *
+ * Guarantee: this returns exactly `count` entries whenever the position has
+ * at least `count` legal moves, regardless of how much (or how little) the
+ * book knows here. Book material is always preferred and never crowded out;
+ * when the book has fewer than `count` continuations (thin book, or no book
+ * at all), the remaining slots are topped up from every other legal move,
+ * ranked by tacticalWeight() (checks, then captures, then castling) ahead of
+ * quiet principled play - so the panel is never short and never empty. The
+ * one honest exception: a position with fewer than `count` legal moves in
+ * total (including the rare case of checkmate/stalemate, zero legal moves)
+ * returns fewer than `count`, or `[]`, because there is nothing further to
+ * offer. Topped-up entries are marked exactly like any other non-book move -
+ * `isBook: false` (equivalently `novelty: true`) - so the UI can badge them
+ * as beyond named theory with the same field it already uses for novelties.
+ *
+ * `count` and `level` are independent - pass
  * `count: DIFFICULTY_PRESETS[level].variations` to size the set to match a
  * difficulty selector; the bare default (5) is intermediate's own count.
  */
@@ -456,17 +518,32 @@ export function trainingVariations({ sanMoves = [], count = 5, level = 'intermed
 
   const inBook = outOfBookPly(sanMoves) === null
   const book = inBook ? variationsFrom(sanMoves) : []
+  const total = book.reduce((sum, e) => sum + e.lineCount, 0)
+  const bookCandidates = book.map((entry) => buildBookCandidate(entry, total, sanMoves, legalBySan))
 
-  if (book.length) {
-    const total = book.reduce((sum, e) => sum + e.lineCount, 0)
-    const candidates = book.map((entry) => buildBookCandidate(entry, total, sanMoves, legalBySan))
-    return pickTrainingSet(candidates, target, resolvedLevel, true)
+  const usedStructures = new Set()
+  const bookChosen = pickFromPool(bookCandidates, target, resolvedLevel, usedStructures, {
+    forceTop: true,
+    forceSharpForExpert: true,
+  })
+
+  const shortfall = target - bookChosen.length
+  let toppedUpChosen = []
+  if (shortfall > 0) {
+    const chosenSans = new Set(bookChosen.map((c) => c.entry.san))
+    const remainingLegal = legal.filter((move) => !chosenSans.has(move.san))
+    const fallbackCandidates = buildFallbackCandidates(remainingLegal)
+    toppedUpChosen = pickFromPool(fallbackCandidates, shortfall, resolvedLevel, usedStructures)
   }
 
-  // Out of book (or a book dead end with no further named play): fall back
-  // to every legal move, scored on principles alone, so the panel is never empty.
-  const candidates = buildFallbackCandidates(legal)
-  return pickTrainingSet(candidates, target, resolvedLevel, false)
+  // toppedUp (for wording only) distinguishes "book had something but ran
+  // out" from "this position had no book candidates at all" - both still
+  // carry isBook: false, which is the field that actually marks them.
+  const toppedUp = bookCandidates.length > 0
+  return [
+    ...bookChosen.map((c) => ({ ...c.entry, whyThisOne: explainWhy(c, resolvedLevel, false), level: resolvedLevel })),
+    ...toppedUpChosen.map((c) => ({ ...c.entry, whyThisOne: explainWhy(c, resolvedLevel, toppedUp), level: resolvedLevel })),
+  ]
 }
 
 /**
