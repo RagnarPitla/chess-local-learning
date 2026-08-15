@@ -234,7 +234,7 @@ button.small { padding: 6px 10px; font-size: var(--text-sm); }
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2); }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-2); text-align: center; }
-.stat .v { font: 600 20px/1.2 var(--mono); }
+.stat .v { font: 600 20px/1.2 var(--mono); overflow-wrap: anywhere; } /* stays put even if a .v holds a longer string, e.g. a date range, not just a short number */
 .stat .k { font-size: var(--text-xs); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .stat.bad .v { color: var(--bad); }
 .stat.warn .v { color: var(--warn); }

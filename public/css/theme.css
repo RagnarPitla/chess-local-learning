@@ -115,50 +115,60 @@
 }
 
 /* ============================================================= dark mode
- * Optional, tasteful, still-monochrome inversion. Light is the default
- * and the designed-for case; this block only ever runs when the OS/
- * browser reports a dark preference, and it keeps the exact same
- * structure (a straight neutral inversion), not a different design.
- * Semantic status colours move to lighter tints of the same hues so
- * they keep AA contrast on the dark background (see docs/DESIGN.md).
+ * Opt-in only - NOT automatic. This app is linked from and must match
+ * https://rbuild.ai, which is light-only with no dark mode. The
+ * marketing page this app sits behind (landing.css) has no dark-mode
+ * block of its own, so an automatic @media (prefers-color-scheme: dark)
+ * here produced a broken product: a white landing page at / leading
+ * into a black app at /app/ for any visitor whose OS/browser requests
+ * dark, roughly half of all visitors. That was confirmed by measuring
+ * getComputedStyle(document.body) on both routes with dark emulated,
+ * not by reading this file - see docs/DESIGN.md section 2.3 for the
+ * exact before/after numbers.
+ *
+ * The dark values below are preserved unchanged and are still tasteful
+ * and still-monochrome; they are simply inert until something
+ * deliberately opts in by setting data-theme="dark" on the root
+ * element. Nothing in this codebase sets that attribute today - there
+ * is no toggle, no persisted preference, and no automatic activation.
+ * Light is the only theme that ever applies unless a future component
+ * adds that opt-in explicitly.
  */
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
+:root[data-theme="dark"] {
+  color-scheme: dark;
 
-    --background: #0a0a0a;
-    --foreground: #fafafa;
-    --card: #171717;
-    --card-foreground: #fafafa;
-    --popover: #171717;
-    --popover-foreground: #fafafa;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --popover: #171717;
+  --popover-foreground: #fafafa;
 
-    --primary: #fafafa;
-    --primary-foreground: #171717;
-    --secondary: #262626;
-    --secondary-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
 
-    --muted: #262626;
-    --muted-foreground: #a3a3a3;
-    --accent: #262626;
-    --accent-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
 
-    --destructive: #ef4444;
-    --destructive-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
 
-    --border: #262626;
-    --input: #262626;
-    --ring: #d4d4d4;
+  --border: #262626;
+  --input: #262626;
+  --ring: #d4d4d4;
 
-    --good: #4ade80;
-    --inaccuracy: #fbbf24;
-    --mistake: #fb923c;
-    --blunder: #f87171;
-    --brilliant: #fafafa;
+  --good: #4ade80;
+  --inaccuracy: #fbbf24;
+  --mistake: #fb923c;
+  --blunder: #f87171;
+  --brilliant: #fafafa;
 
-    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
-  }
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
 }
 
 /* ==================================================================
