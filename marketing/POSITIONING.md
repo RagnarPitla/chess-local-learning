@@ -1,4 +1,4 @@
-# Positioning - Chess Local Learning
+# Positioning - Ramify
 
 Status: messaging foundation. Everything else in marketing/ should trace back to this file.
 All claims below were checked against the actual source in public/js/ and README.md on 2026-08-15.
@@ -8,7 +8,7 @@ See the "Proof points" table for the file and function behind every claim.
 
 ## 1. The one-liner
 
-> Chess Local Learning turns your own games into your own curriculum - free, open source, and it
+> Ramify turns your own games into your own curriculum - free, open source, and it
 > never leaves your browser.
 
 Alternate (more technical, for developer channels):
@@ -27,7 +27,7 @@ Alternate (more technical, for developer channels):
 ## 3. The 100-word version
 
 > Chess lessons teach trees: if they play X, you play Y. Real opponents play graphs - anything
-> legal - and the moment they deviate, memorised lines stop helping. Chess Local Learning is a
+> legal - and the moment they deviate, memorised lines stop helping. Ramify is a
 > free, open-source chess trainer that fixes this differently: it plays you at any strength, marks
 > every mistake with a named tactical or positional pattern (not just "the engine prefers Nf3"),
 > and turns your own blunders into spaced-repetition drills. When an opponent leaves known theory,
@@ -144,7 +144,7 @@ make the claim in copy.
 | Your games never leave your machine | `public/js/profile.js` `storage` object: profile in `localStorage`, mirrored to `data/profile.json` on your own machine; both gitignored; Export/Reset buttons on Profile tab | The only outbound calls are opt-in: the LLM coach (if you add a key) and the Lichess puzzle API (if you press "Fetch a themed puzzle") |
 | Free and open source, MIT | `LICENSE`, `package.json` `"license": "MIT"` | Stockfish itself ships as an unmodified GPL dependency from `node_modules`, per README; chess.js is BSD-2, cm-chessboard is MIT |
 | Play Stockfish at a chosen strength, 1320-2850 | `public/index.html` elo slider `min="1320" max="2850"`, `public/js/engine.js` `configure({elo})` sends `setoption name UCI_Elo` | Uses Stockfish's own UCI_Elo limiter, not a custom weakening hack |
-| Every mistake tagged with a real chess reason, not "engine prefers X" | `public/js/patterns.js`: 24-entry `PATTERN_LIBRARY` (hanging piece, missed/allowed fork, missed/allowed pin, back rank, king safety, uncastled king, overloaded defender, trapped piece, bad bishop, IQP, doubled/isolated/passed pawns, undeveloped pieces, moved-piece-twice, early queen, centre neglect, endgame technique, threw-away-win, panic-out-of-book) | Core primitive is a real static-exchange evaluation (`see()`) that plays out the full capture sequence, not a simple attacker/defender count |
+| Every mistake tagged with a real chess reason, not "engine prefers X" | `public/js/patterns.js`: 23-entry `PATTERN_LIBRARY` (hanging piece, missed/allowed fork, missed/allowed pin, back rank, king safety, uncastled king, overloaded defender, trapped piece, bad bishop, IQP, doubled/isolated/passed pawns, undeveloped pieces, moved-piece-twice, early queen, centre neglect, endgame technique, threw-away-win, panic-out-of-book) | Core primitive is a real static-exchange evaluation (`see()`) that plays out the full capture sequence, not a simple attacker/defender count |
 | Every blunder gets an explanation, not silence | `patterns.js` `tagMove()`; README states every blunder is "guaranteed to receive at least one tag" | Verified by reading `tagMove` - it falls through to a scan-based tag if nothing more specific matched |
 | Accuracy and average centipawn loss per game | `public/js/analysis.js` `moveAccuracy()` (Lichess-style win% formula), `annotateGame()` summary | N+1 engine calls for N moves, not 2N - documented rationale in the file header |
 | Drills come from your own games, not a generic puzzle set | `public/js/puzzles.js` `puzzlesFromGame()` - builds puzzles directly from tagged mistakes in your annotated game | Falls back to your worst moves above a lower threshold if a game was clean, so the drill queue is never empty |

@@ -2,7 +2,7 @@
 
 ## Title
 
-Chess Local Learning: a free, open-source trainer that turns your own games into your own lessons
+Ramify: a free, open-source trainer that turns your own games into your own lessons
 
 (Under 100 characters, no clickbait framing, names the product and the mechanism.)
 
@@ -17,7 +17,7 @@ of a free, open-source chess trainer built around that specific problem.
 What it does:
 - Plays you at a chosen strength (Stockfish 18, 1320-2850 Elo, running entirely in your browser)
 - Tags every mistake with a real, named reason (hanging piece, missed fork, bad bishop, and more -
-  24 patterns total) using a static-exchange evaluation, not just an engine score
+  23 patterns total) using a static-exchange evaluation, not just an engine score
 - Builds your practice drills from your own games, ranked by a weakness profile that tracks what's
   actually costing you over time
 - Explains it, with actual position facts and principles, when your opponent leaves known theory

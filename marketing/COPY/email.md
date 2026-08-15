@@ -13,11 +13,11 @@ be a little warmer/more personal than a Show HN post, since the reader opted in 
 
 ## Launch announcement (send once, to anyone who signed up before launch)
 
-**Subject:** Chess Local Learning is live
+**Subject:** Ramify is live
 
 Hi,
 
-Chess Local Learning is live: https://ragnarpitla.github.io/chess-local-learning/
+Ramify is live: https://ragnarpitla.github.io/chess-local-learning/
 
 Quick recap of why this exists: chess lessons teach trees (if they play X, you play Y), and real
 opponents play graphs (anything legal). The moment someone deviates from a memorised line, the tree

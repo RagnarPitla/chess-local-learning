@@ -1,5 +1,9 @@
 # Product Hunt copy
 
+## Product name (the required "Name" field on the submission form)
+
+Ramify
+
 ## Tagline (60 characters max - Product Hunt enforces this)
 
 Primary (53 chars):
@@ -15,9 +19,9 @@ Alternates, all under 60 characters:
 Chess lessons teach trees: if they play X, you play Y. Real opponents play graphs - anything legal
 - and the moment they deviate, the tree runs out and you're left with no plan.
 
-Chess Local Learning plays you at a strength you pick (Stockfish 18, running in your own browser),
+Ramify plays you at a strength you pick (Stockfish 18, running in your own browser),
 tags every mistake with a real, named reason instead of just a centipawn number (hanging piece,
-missed fork, bad bishop, one of 24 patterns backed by an actual static-exchange evaluation), and
+missed fork, bad bishop, one of 23 patterns backed by an actual static-exchange evaluation), and
 turns your own blunders into a personal, spaced-repetition drill set. When your opponent leaves
 known opening theory, it explains what changed in the position and which principle applies, instead
 of going quiet.

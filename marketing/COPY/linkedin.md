@@ -12,9 +12,9 @@ Format: LinkedIn rewards short paragraphs and white space, not walls of text. Wr
 ## Post
 
 I spent a chunk of the last stretch building something outside of client work: a free, open-source
-chess trainer. Not because the world needs another chess app - because I wanted a real, non-trivial
-test of what a fleet of AI coding agents working in parallel can actually ship, end to end, when
-the output has to be genuinely correct and not just plausible-looking.
+chess trainer called Ramify. Not because the world needs another chess app - because I wanted a
+real, non-trivial test of what a fleet of AI coding agents working in parallel can actually ship,
+end to end, when the output has to be genuinely correct and not just plausible-looking.
 
 The premise of the tool itself: chess lessons teach trees ("if they play X, you play Y"). Real
 opponents play graphs - anything legal - and the moment someone deviates from the memorised line,
@@ -52,10 +52,10 @@ didn't get right - genuinely, warts included.
 
 ## Shorter variant (if a more compact post is wanted)
 
-Built a free, open-source chess trainer over the last stretch - not because chess needed another
-app, but because I wanted a real test of what a fleet of AI coding agents can ship end to end when
-the result has to actually work, gated by a real test suite (50 unit tests plus a full headless-
-browser end-to-end suite), not just look plausible.
+Built a free, open-source chess trainer called Ramify over the last stretch - not because chess
+needed another app, but because I wanted a real test of what a fleet of AI coding agents can ship
+end to end when the result has to actually work, gated by a real test suite (50 unit tests plus a
+full headless-browser end-to-end suite), not just look plausible.
 
 The product itself solves a real problem: chess lessons teach you a script ("if they play X, you
 play Y"), and real opponents don't follow scripts. This plays you at your level, explains your

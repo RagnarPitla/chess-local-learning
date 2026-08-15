@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" width="720" height="160">
-  <title>Chess Local Learning - logo lockup</title>
+  <title>Ramify - logo lockup</title>
   <defs>
     <style>
       text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -24,6 +24,6 @@
     </g>
   </g>
 
-  <text x="152" y="88" font-size="52" font-weight="700" fill="#0a0a0a">Chess Local Learning</text>
+  <text x="152" y="88" font-size="52" font-weight="700" fill="#0a0a0a">Ramify</text>
   <text x="153" y="120" font-size="22" font-weight="500" letter-spacing="1.5" fill="#737373">FREE AND OPEN SOURCE</text>
 </svg>

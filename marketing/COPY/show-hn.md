@@ -29,7 +29,7 @@ Source: https://news.ycombinator.com/showhn.html and https://news.ycombinator.co
 
 ## Title
 
-Show HN: Chess Local Learning - a free, open-source chess trainer that runs on your own games
+Show HN: Ramify - a free, open-source chess trainer that runs on your own games
 
 (Alternative, more literal to the positioning spine, if the above feels like it undersells the
 mechanism:)
@@ -59,7 +59,7 @@ So this doesn't try to make you memorise more. It plays you at a chosen strength
 WASM, running in a Web Worker, so nothing leaves your browser), and when you make a mistake it
 doesn't just tell you the centipawn loss - it runs a static-exchange evaluation and a set of board-
 logic checks and tells you the actual reason: a hanging piece, an overloaded defender, a missed
-fork, a bad bishop, one of 24 named patterns. Those mistakes become your own drill set: puzzles
+fork, a bad bishop, one of 23 named patterns. Those mistakes become your own drill set: puzzles
 built from the exact positions where you went wrong, not a generic puzzle rated at your level that
 has nothing to do with your habits. A weakness profile ranks what's actually costing you, blending
 how expensive a mistake pattern is, how often it recurs, and how recently, and a Leitner-style

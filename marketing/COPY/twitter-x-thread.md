@@ -19,14 +19,14 @@ broken script.
 I built a free tool that fixes the actual problem instead of asking you to memorise more.
 
 **2/**
-Chess Local Learning plays you at a strength you pick (1320-2850), running Stockfish 18 in your
+Ramify plays you at a strength you pick (1320-2850), running Stockfish 18 in your
 own browser via WASM. No account, no server-side game.
 
 When you make a mistake, it doesn't just show a centipawn number. It names the actual reason.
 
 **3/**
 Under the hood: a real static-exchange evaluation plus board-logic checks tag every mistake with
-one of 24 named patterns - hanging piece, overloaded defender, bad bishop, missed fork, and more.
+one of 23 named patterns - hanging piece, overloaded defender, bad bishop, missed fork, and more.
 Every blunder gets an explanation, not just a number.
 
 **4/**
@@ -70,7 +70,7 @@ at all. That gap is the actual problem, and it's not a memorisation problem.
 
 "You lost 180 centipawns" tells you nothing. "You left the knight on d4 defended only once, so it
 was just taken" tells you what to fix.
-Chess Local Learning tags every mistake with one of 24 named patterns using a real static-exchange
+Ramify tags every mistake with one of 23 named patterns using a real static-exchange
 evaluation, not a vague "engine prefers X."
 Free, open source: [repo link]
 

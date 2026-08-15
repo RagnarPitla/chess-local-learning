@@ -52,13 +52,14 @@ opponent played something slightly off the main line, I had nothing. Not "the wr
 *nothing*, no model of what was actually happening in the position. I don't think that's a "study
 harder" problem. It's a "the format only teaches scripts" problem.
 
-So I built something that does the opposite of memorisation:
+So I built something that does the opposite of memorisation. (Ended up calling it Ramify - the
+name is about branching, not memorising a single line.)
 
 - You play Stockfish at a strength you pick (1320-2850 Elo, using Stockfish's own UCI_Elo limiter),
   running entirely in your browser via WASM. No server-side game, no account.
 - When you make a mistake, it doesn't just show you a centipawn number - it runs a real static-
   exchange evaluation and a set of board-logic checks and names the actual reason: a hanging piece,
-  a missed or allowed fork, an overloaded defender, a bad bishop, one of 24 named patterns.
+  a missed or allowed fork, an overloaded defender, a bad bishop, one of 23 named patterns.
 - Those mistakes become your drill set. Not a generic puzzle rated near your level - the exact
   position from your own game where you went wrong, and you have to find what you missed the first
   time.

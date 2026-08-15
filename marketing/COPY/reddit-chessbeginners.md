@@ -47,8 +47,9 @@ A free tool that explains chess mistakes in plain English, built for exactly thi
 
 ### Post body
 
-I made this with beginners specifically in mind, because most tools either just show you a
-centipawn number ("-180") or assume you already know why. This one plays chess review differently:
+I made this (it's called Ramify) with beginners specifically in mind, because most tools either
+just show you a centipawn number ("-180") or assume you already know why. This one plays chess
+review differently:
 it tags every mistake with an actual, named reason in plain language - "you left a piece defended
 only once," "the queen got out before the other pieces were ready," "the king never castled and
 the position opened up" - alongside the better move.

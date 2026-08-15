@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 627" width="1200" height="627">
-  <title>Chess Local Learning - social card (LinkedIn)</title>
+  <title>Ramify - social card (LinkedIn)</title>
   <defs>
     <style>
       text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -11,7 +11,7 @@
 
   <text x="64" y="106" font-size="20" font-weight="600" letter-spacing="2" fill="#737373">BUILT BY AN AI AGENT FLEET - FREE AND OPEN SOURCE</text>
 
-  <text x="62" y="208" font-size="68" font-weight="700" fill="#0a0a0a">Chess Local Learning</text>
+  <text x="62" y="208" font-size="68" font-weight="700" fill="#0a0a0a">Ramify</text>
 
   <text x="64" y="262" font-size="28" fill="#404040">An open-source chess trainer designed, built and tested</text>
   <text x="64" y="300" font-size="28" fill="#404040">by AI agents working in parallel on the same codebase.</text>

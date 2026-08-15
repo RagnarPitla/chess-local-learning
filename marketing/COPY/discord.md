@@ -40,8 +40,8 @@ Do not treat either bullet above as a guarantee of what those servers currently 
 
 ## Draft post (use inside an appropriate self-promo/showcase channel only, adapted per server)
 
-I built a free, open-source chess trainer and wanted to share it here since it's directly relevant
-to this server: https://ragnarpitla.github.io/chess-local-learning/
+I built a free, open-source chess trainer called Ramify and wanted to share it here since it's
+directly relevant to this server: https://ragnarpitla.github.io/chess-local-learning/
 
 The idea: chess lessons teach you a script (if they play X, you play Y), and real opponents don't
 follow scripts. This plays you at a chosen strength (Stockfish, running client-side), tags mistakes
@@ -55,6 +55,6 @@ wrong or missing.
 
 ## Shorter variant (for servers where showcase posts are expected to be brief)
 
-Free, open-source chess trainer that builds your drills and lessons from your own games instead of
-a generic curriculum - runs entirely in the browser, no account. Feedback welcome:
+Ramify: a free, open-source chess trainer that builds your drills and lessons from your own games
+instead of a generic curriculum - runs entirely in the browser, no account. Feedback welcome:
 https://ragnarpitla.github.io/chess-local-learning/

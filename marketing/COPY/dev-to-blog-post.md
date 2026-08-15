@@ -13,7 +13,7 @@ tags: ai, opensource, javascript, chess
 
 I run rbuild.ai, which is about enterprise AI adoption and agent-driven workflows, so I wanted a
 real, non-trivial project to stress-test what a fleet of AI coding agents can actually ship end to
-end, on their own, when the output has to be correct and not just plausible. Chess Local Learning
+end, on their own, when the output has to be correct and not just plausible. Ramify
 (free, MIT licensed, https://github.com/RagnarPitla/chess-local-learning) is that project. This is
 the honest write-up of how it got built, not a highlight reel.
 

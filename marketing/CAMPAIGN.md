@@ -1,4 +1,4 @@
-# Campaign Plan - Chess Local Learning
+# Campaign Plan - Ramify
 
 This is the actual plan: what happens, in what order, on which channel, with what effort, and what
 "working" looks like. Pairs with POSITIONING.md (the message) and METRICS.md (the numbers and
@@ -21,15 +21,25 @@ Secondary goal: tell the "built by a fleet of AI agents working in parallel" sto
 it earns rbuild.ai credibility with an AI-engineering audience, without it overshadowing the first
 goal or reading as a stunt.
 
-Numeric targets are in METRICS.md (week 1 / month 1 / month 3). Repeated here only as headlines:
+Numeric targets below are aligned with docs/LAUNCH.md's own "Success metrics" section (written the
+same day the repo went public, from a real 0-stars/0-visitors starting point) so this campaign and
+that plan do not quote two different numbers for the same launch. METRICS.md repeats and expands on
+these with the funnel and instrumentation detail; treat docs/LAUNCH.md as the source if the two ever
+drift.
 
-- Week 1: low hundreds of unique visitors to the hosted app, double-digit GitHub stars, a
-  double-digit number of people who actually start a game (not just land on the page).
-- Month 1: repo past 100 stars only if a channel genuinely hits (Show HN front page or a large
-  subreddit thread landing well) - treat this as an upside case, not the plan.
-  A realistic base case is 30-80 stars and a handful of issues/PRs from real users.
-- Month 3: a small, real trickle of organic traffic (search + link shares) rather than campaign-
-  driven spikes; 2-5 unprompted mentions/shares from people who were not asked to post.
+- Week 1: 50-150 unique visitors to the hosted app; 10-30 people who actually play or import a game
+  (not just land on the page); 3-10 GitHub stars; 0-2 pieces of direct, unprompted feedback. A
+  genuinely front-page Show HN or Reddit hit would beat the high end of this by an order of
+  magnitude for 24-48 hours - that is a real possible outcome, not the plan to bank on.
+- Month 1: 300-1,000 cumulative unique visitors; 50-150 people who reach "activated" (finished at
+  least one reviewed game); 20-50 GitHub stars; 5-15 structured feedback responses (see docs/
+  LAUNCH.md's "First 10 users" plan - a concrete one-to-one outreach method, not just waiting for
+  inbound); treat anything past 100 stars in month 1 as an upside case (a channel genuinely hitting),
+  not the plan.
+- Month 3: 1,000-4,000 cumulative unique visitors; 150-400 activated users; 60-150 GitHub stars; a
+  measurable weekly-return rate among activated users (10-20% would be a reasonable early signal,
+  not an established benchmark); 2-5 unprompted mentions/shares from people who were not asked to
+  post.
 
 ---
 
@@ -39,6 +49,16 @@ Numeric targets are in METRICS.md (week 1 / month 1 / month 3). Repeated here on
 
 Goal: everything works cold, for a stranger, with no context, on the first try.
 
+- [ ] **Hard gate, per docs/LAUNCH.md: do not launch publicly before "ui-integration" lands** (the
+      live variation panel and the Learn, Library, and Progress tabs actually wired into the UI a
+      visitor sees, not just present as backend modules). Launching before that means promoting
+      features nobody can find, and directly conflicts with POSITIONING.md's own dropped-claims
+      list, which already excludes the Explorer/Progress tabs for exactly this reason. Re-check this
+      dependency's status immediately before executing anything else in this checklist.
+- [ ] Also per docs/LAUNCH.md: before any public post, work through its "First 10 users" plan
+      (one-to-one outreach with the 6 listed questions, via personal network and existing
+      self-identifying threads) - a broken first impression with 5 people you know is a bug to fix;
+      a broken first impression on Hacker News or Reddit is very hard to undo.
 - [ ] Confirm the hosted build at https://ragnarpitla.github.io/chess-local-learning/ loads, plays
       a full game, reviews a pasted PGN, generates a drill, and shows the profile - with nothing
       but the empty-state copy already in `public/index.html` guiding a first-time user.
@@ -109,7 +129,14 @@ Sequencing matters more than volume. Order below is deliberate - see Section 4 f
 
 ## 3. Channel-by-channel strategy
 
-Ordered by priority (expected return per unit of effort for a solo, zero-budget launch).
+Ordered by priority (expected return per unit of effort for a solo, zero-budget launch). This is a
+different axis from *posting order* - Phase 1's day-by-day table already sequences the quieter,
+community-embedded channels (Lichess forum, r/chess low-key participation) before the loud Show HN
+moment, which matches docs/LAUNCH.md's own risk-ordered channel list ("your own network first,
+quietly" then r/chess/r/chessbeginners, then Lichess forum/Discord, then Hacker News, then Product
+Hunt) even though that document ranks by launch-day sequence rather than by expected-value-per-effort
+the way the table below does. Read the two together: docs/LAUNCH.md answers "what do I post first,"
+this table answers "what matters most if I can only do a few things well."
 
 | Priority | Channel | Effort | Expected return | Why |
 |---|---|---|---|---|
