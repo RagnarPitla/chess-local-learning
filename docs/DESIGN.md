@@ -568,18 +568,17 @@ global ring reaches every focusable element, including those two.
 - **Visual references**: the owner supplied two reference directions.
   The winning direction - faceted, low-poly, sculptural chess pieces in
   white and charcoal on a clean board, with soft grey shadows - informed
-  the monochrome board treatment in this document (section 6.4) and was
-  realised as this project's own artwork at
-  `public/assets/pieces/faceted.svg`. The secondary reference - bold,
+  the monochrome board treatment in this document (section 6.4). It is now
+  realised by the owner-selected Design-1 source renders and the active
+  `public/assets/pieces/design-1.svg` sprite. The first hand-authored
+  implementation remains available at `public/assets/pieces/faceted.svg`.
+  The secondary reference - bold,
   solid-black woodcut-style piece silhouettes for icons and marks - is
-  realised at `public/assets/pieces/silhouette.svg`. Both are original
-  work produced for this project (hand-authored SVG polygon paths, not
-  traced or copied from any third-party asset); see
+  realised at `public/assets/pieces/silhouette.svg`. The vector sets are
+  original hand-authored work produced for this project; Design-1 is
+  owner-directed, owner-provided AI-assisted artwork. See
   `public/assets/pieces/README.md` and `docs/CREDITS.md` for the full
-  authorship and licence record. This document does not restate that
-  ledger, only confirms it: every piece of artwork referenced by the
-  design system described here is originally authored for this project,
-  not copied from elsewhere.
+  provenance and licence record.
 - **Rejected references**: glowing blue AI wireframes, glass pieces, and
   blue-and-orange painterly art were supplied as contrast/rejected
   examples by the owner and are recorded here only as the "do not do

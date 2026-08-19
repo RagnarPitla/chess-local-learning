@@ -102,7 +102,7 @@ licence:
   `User:Rfc1394`.
 
 `public/js/board.js` now configures the board with this project's own
-original sprite - `pieces: { file: new URL('../assets/pieces/faceted.svg',
+selected sprite - `pieces: { file: new URL('../assets/pieces/design-1.svg',
 import.meta.url).href }`. **Neither vendored set above is rendered to users.**
 `staunty.svg` is additionally excluded from the deploy artifact by
 `scripts/build-static.mjs`. See "Licence compliance gaps" below.
@@ -115,8 +115,13 @@ import.meta.url).href }`. **Neither vendored set above is rendered to users.**
     sprite"). This does not resemble either of the vendored sets above and is
     original work produced for this project. `public/assets/pieces/README.md`
     now exists and explicitly releases both files under this repository's MIT
-    licence, and `public/js/board.js` has been repointed to render
-    `faceted.svg`. Both facts are confirmed as of this update.
+    licence. They remain available as project-owned vector alternatives.
+- `Resources/Design-1/*.png` and `public/assets/pieces/design-1.svg`
+  - owner-directed, owner-provided AI-assisted artwork generated for Ramify,
+    selected by Ragnar and included with the owner's approval. The source
+    renders are preserved outside the deploy tree. The active SVG embeds
+    transparent normalized tiles produced by
+    `scripts/build-design1-sprite.py`.
 - **White-theme design system / shadcn/ui palette:** the light restyle has
   since landed. `public/css/theme.css` defines the token layer and
   `public/css/styles.css` and `public/css/landing.css` both consume it, using
@@ -182,7 +187,8 @@ copyrighted and not reused here).
 | cm-chessboard (code) | MIT | Yes | Same licence family. Already credited in `LICENSE`. |
 | cm-chessboard bundled "staunty" piece SVG (**not used; excluded from `dist/`**) | CC BY-NC-SA 4.0 | **No, for commercial use** | NonCommercial term. Never rendered by this app and blocked from the deploy artifact by `scripts/build-static.mjs`, with a `build:check` assertion enforcing it. |
 | cm-chessboard bundled "standard" (Wikimedia) piece SVG | CC BY-SA 3.0 | Yes, with conditions | Commercial use is allowed; requires attribution to Cburnett/Rfc1394 and that any adaptation stay CC BY-SA. Not the active default; retained only as the library's internal fallback. |
-| `public/assets/pieces/faceted.svg` (**the active board sprite**) | MIT (this repo) | Yes | Original artwork authored for this project. See `public/assets/pieces/README.md`. |
+| `public/assets/pieces/design-1.svg` (**the active board sprite**) | Owner-provided AI-assisted project asset | Yes, with the owner's approval | Built from the owner-provided sources in `Resources/Design-1`. This provenance record is not a legal opinion about copyright in AI-assisted output. |
+| `public/assets/pieces/faceted.svg` and `silhouette.svg` | MIT (this repo) | Yes | Original hand-authored vector artwork retained as alternative sets. |
 | Stockfish (WASM engine) | GPL-3.0 | Yes, as an unmodified, separately-invoked runtime dependency | See section 3 in full. Do not statically link or modify it. Get a real legal opinion before any commercial distribution model changes. |
 | lichess-org/chess-openings (ECO data) | CC0-1.0 | Yes, unconditionally | Public domain dedication. Attribution to Lichess is courteous, not required. |
 | Lichess Puzzle Database | CC0 | Yes, unconditionally | Same as above; used live, not bundled. |
@@ -196,13 +202,11 @@ Stockfish as an unmodified GPL-3.0 runtime dependency loaded from
 repeats the same three under its own "Licence" heading. Both are accurate as
 far as they go.
 
-**What neither file mentions, and should:** the CC BY-NC-SA 4.0 status of the
-piece art actually being rendered, or the CC0 status of the bundled ECO
-dataset (courtesy attribution, not a legal requirement, but good practice for
-an open-source project that wants to be a credible reference for others).
-Recommend `LICENSE` and `README.md` add one line each pointing to this
-`docs/CREDITS.md` as the full ledger, once the piece-art gap below is
-resolved.
+`README.md` points to this file as the full ledger. The NonCommercial Staunty
+set is documented here because it remains present in the upstream dependency,
+but it is neither rendered nor deployed. The active Design-1 provenance and
+the CC0 opening/puzzle data are also recorded here so the product does not
+depend on undocumented visual or data assets.
 
 ## 10. Licence compliance gaps
 
@@ -210,12 +214,12 @@ resolved.
 user of this app was `node_modules/cm-chessboard/assets/pieces/staunty.svg`,
 licensed **CC BY-NC-SA 4.0 - NonCommercial**, which meant the default visual
 identity of an MIT project intended to support commercial use was not itself
-free for commercial use. Fixed by option 1 below. `public/js/board.js` now
-renders this repository's own MIT-licensed `public/assets/pieces/faceted.svg`,
-`public/assets/pieces/README.md` states that licence explicitly, and
+free for commercial use. `public/js/board.js` now renders the project-selected
+`public/assets/pieces/design-1.svg`, the owner-provided sources and provenance
+are recorded in `Resources/Design-1`, and
 `scripts/build-static.mjs` both excludes `staunty.svg` from `dist/` and fails
 `npm run build:check` if any file carrying a `BY-NC` / `NonCommercial` licence
-string reaches the deploy artifact. Verified end to end: 25/25 headless-Chrome
+string reaches the deploy artifact. Verified end to end: 40/40 headless-Chrome
 checks pass with the new sprite rendering, and the build check reports
 "no NonCommercial-licensed asset shipped in dist/".
 
@@ -226,11 +230,10 @@ commercial use with attribution, which section 5 provides.
 
 *The fix options, recorded as originally assessed:*
 
-1. Finish wiring in the original piece set that already exists in this
-   repository (`public/assets/pieces/faceted.svg` / `silhouette.svg`),
-   repoint `public/js/board.js`'s `assetsUrl` and `pieces.file` at it, and add
-   a `public/assets/pieces/README.md` that explicitly licenses that artwork
-   (MIT or CC0, to match the rest of the project). **This is what was done.**
+1. Render a project-supplied piece set instead of Staunty and record its
+   provenance. **This is what was done:** Design-1 is active, while
+   `faceted.svg` and `silhouette.svg` remain available as MIT-licensed vector
+   alternatives.
 2. Failing that, switch the default to cm-chessboard's other bundled sprite,
    `pieces/standard.svg` (CC BY-SA 3.0, Cburnett/Rfc1394 via Wikimedia), which
    does permit commercial use, and add the required attribution to `LICENSE`

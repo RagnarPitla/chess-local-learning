@@ -252,8 +252,8 @@ npm run build     # produce dist/
 npm run build:check  # verify dist/ is actually deployable
 ```
 
-Verified while writing this README: `npm test` 51/51, `npm run test:e2e`
-25/25 in real Chrome, `npm run build:check` passing at both the root base and
+Current local verification: `npm test` 156/156, `npm run test:e2e`
+40/40 in real Chrome, `npm run build:check` passing at both the root base and
 the GitHub Pages project base (`/chess-local-learning/`). See
 [`CONTRIBUTING.md`](CONTRIBUTING.md) for what each layer actually covers.
 

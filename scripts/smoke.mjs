@@ -243,20 +243,83 @@ async function main() {
     )
     record('starting pieces render', pieces >= 32, `${pieces} piece nodes`)
 
+    const design1 = await cdp.eval(() => {
+      const sprite = document.querySelector('#cm-chessboard-sprite > svg')
+      return {
+        title: sprite?.querySelector(':scope > title')?.textContent || '',
+        tiles: sprite?.querySelectorAll(':scope > g[id] > image').length || 0,
+      }
+    })
+    record(
+      'Design-1 sprite loads all twelve transparent piece tiles',
+      design1.title === 'Ramify Design-1 sculpted chess piece sprite' && design1.tiles === 12,
+      `${design1.title || 'missing title'}; ${design1.tiles} tiles`,
+    )
+
     /* 2. play a move and get an engine reply */
     await cdp.eval(() => window.chessCoach.newGame())
     const mode = await cdp.eval(() => window.chessCoach.state.mode)
     record('new game enters play mode', mode === 'play', mode)
 
-    const accepted = await cdp.eval(() => window.chessCoach.playSan('e4'), { awaitPromise: false })
-    record('player move accepted', accepted === true)
+    await cdp.waitFor(
+      () => window.chessCoach.state.board.inputColour === 'w',
+      { timeout: 15000, label: 'white move input' },
+    )
+    await cdp.eval(() => {
+      document.querySelector('#board [data-square="e3"]').scrollIntoView({ block: 'center', inline: 'center' })
+    })
+    await sleep(100)
+    const drag = await cdp.eval(() => {
+      const centre = (square) => {
+        const rect = document.querySelector(`#board [data-square="${square}"]`).getBoundingClientRect()
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+      }
+      return { from: centre('e2'), to: centre('e4') }
+    })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...drag.from })
+    await cdp.send('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      ...drag.from,
+      button: 'left',
+      buttons: 1,
+      clickCount: 1,
+    })
+    for (let step = 1; step <= 6; step += 1) {
+      await cdp.send('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: drag.from.x + ((drag.to.x - drag.from.x) * step) / 6,
+        y: drag.from.y + ((drag.to.y - drag.from.y) * step) / 6,
+        button: 'left',
+        buttons: 1,
+      })
+    }
+    await cdp.send('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      ...drag.to,
+      button: 'left',
+      buttons: 0,
+      clickCount: 1,
+    })
+    await cdp.waitFor(
+      () => window.chessCoach.state.chess.history().length >= 1,
+      { timeout: 10000, label: 'dragged player move' },
+    )
+    const playerHistory = await cdp.eval(() => window.chessCoach.state.chess.history())
+    record('real board drag accepts e2-e4', playerHistory[0] === 'e4', playerHistory.join(' '))
 
     await cdp.waitFor(
-      () => window.chessCoach.state.chess.history().length >= 2 && !window.chessCoach.state.thinking,
+      () =>
+        window.chessCoach.state.chess.history().length >= 2 &&
+        !window.chessCoach.state.thinking &&
+        window.chessCoach.state.board.inputColour === 'w',
       { timeout: 45000, label: 'engine reply' },
     )
     const history = await cdp.eval(() => window.chessCoach.state.chess.history())
     record('engine answers with a legal move', history.length === 2 && history[0] === 'e4', history.join(' '))
+    record(
+      'board input returns to White after the engine reply',
+      await cdp.eval(() => window.chessCoach.state.board.inputColour === 'w'),
+    )
 
     const evalHeight = await cdp.eval(() => document.getElementById('evalbar-fill').style.height)
     record('evaluation bar updates', Boolean(evalHeight), evalHeight)
@@ -453,7 +516,47 @@ async function main() {
     )
     record('library.clearLibrary empties the store entirely', library.afterClearCount === 0, String(library.afterClearCount))
 
-    /* 8. dark mode: an OS/browser dark preference must never invert either
+    /* 8. visual system: depth remains visible and the board remains usable
+       at the narrow viewport used by mobile learners. */
+    const depth = await cdp.eval(() => {
+      const board = getComputedStyle(document.querySelector('.board-wrap'))
+      const card = getComputedStyle(document.querySelector('.card'))
+      const button = getComputedStyle(document.querySelector('button'))
+      return {
+        boardBorder: board.borderTopWidth,
+        boardShadow: board.boxShadow,
+        cardShadow: card.boxShadow,
+        buttonShadow: button.boxShadow,
+      }
+    })
+    record(
+      'board, cards and controls retain borders and depth shadows',
+      depth.boardBorder !== '0px' &&
+        depth.boardShadow !== 'none' &&
+        depth.cardShadow !== 'none' &&
+        depth.buttonShadow !== 'none',
+      JSON.stringify(depth),
+    )
+
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    })
+    const mobile = await cdp.eval(() => ({
+      viewport: window.innerWidth,
+      pageWidth: document.documentElement.scrollWidth,
+      boardWidth: document.querySelector('.board-wrap').getBoundingClientRect().width,
+    }))
+    record(
+      'Design-1 board fits a 390px mobile viewport without horizontal overflow',
+      mobile.pageWidth <= mobile.viewport && mobile.boardWidth <= mobile.viewport,
+      JSON.stringify(mobile),
+    )
+    await cdp.send('Emulation.clearDeviceMetricsOverride')
+
+    /* 9. dark mode: an OS/browser dark preference must never invert either
        page. This is a real-browser check of the exact historical defect
        described in the project brief (an automatic prefers-color-scheme
        block turned the app dark while the landing page stayed light) -
@@ -479,7 +582,7 @@ async function main() {
     )
     await cdp.send('Emulation.setEmulatedMedia', { features: [] })
 
-    /* 9. nothing broke along the way */
+    /* 10. nothing broke along the way */
     const noise = [...cdp.consoleErrors, ...cdp.pageErrors].filter(
       (m) => !/favicon|lichess|net::ERR_INTERNET|Failed to load resource: the server responded with a status of 404/i.test(m),
     )
