@@ -387,6 +387,22 @@ overriding third-party CSS regardless of load order or preset choice, so
 the board is monochrome no matter which of the seven preset names ends up
 active.
 
+The board now has one additional depth layer without changing that
+monochrome language: `.board-wrap` is a white surface with a 1px hairline
+border, rounded outer frame and `--shadow-sm`; the inner board keeps its own
+1px border and `--shadow-xs`. Cards use the same hairline plus
+`--shadow-xs`, while buttons lift from `--shadow-xs` to `--shadow-sm` on
+hover. The active SVG pieces receive a small `drop-shadow` edge treatment,
+with slightly more separation on white pieces so they remain visible on
+`#fafafa` squares. These are depth and legibility cues, not decoration:
+there is no coloured shadow, glow or gradient, and the 390px layout is
+measured to stay within the viewport.
+
+The next piece set should be generated from
+`docs/CHESS-PIECE-RENDER-BRIEF.md`. It preserves the 40 x 40 sprite contract
+while adding explicit contour and contact-shadow requirements to the source
+art.
+
 The same ladder extends to the new `pgr-mastery-tile` component
 (`progress.js`'s pattern-mastery grid): unseen is faded/muted, weak is a
 solid `--blunder`-coloured border, improving is a dashed `--mistake`
