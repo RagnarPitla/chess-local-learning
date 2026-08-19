@@ -212,23 +212,38 @@ function selectTab(name) {
   })
   document.querySelectorAll('.side-col > .panel').forEach((p) => p.classList.toggle('is-active', p.id === `panel-${name}`))
 
-  const wasLesson = state.boardOwner === 'lesson'
+  // A lesson, a drill or a review must not leave its position and caption
+  // sitting under another tab. Board work is queued, so a restore followed by
+  // a lesson load now finishes in that order instead of racing.
+  const wasDetour = state.boardOwner !== 'game'
   if (name !== 'learn' && state.mode === 'lesson') exitLessonMode()
 
   if (name === 'drills') enterDrillMode()
   else if (state.mode === 'drill') exitDrillMode()
 
   if (name === 'play') restorePlayBoard()
-  // A lesson must not leave its position and caption sitting under another tab.
-  else if (wasLesson && name !== 'drills') restorePlayBoard()
+  else if (wasDetour && name !== 'drills') restorePlayBoard()
   if (name === 'learn') renderLearn()
   if (name === 'library') ensureLibraryMounted()
   if (name === 'progress') renderProgressDashboard()
   if (name === 'profile') renderProfile()
 }
 
+/** Board handovers are async, so two of them in flight at once can finish in
+ *  the wrong order and leave a trailing disableInput() sitting on top of the
+ *  enableInput() that was supposed to win. Run them strictly one at a time. */
+let boardQueue = Promise.resolve()
+function queueBoardWork(work) {
+  boardQueue = boardQueue.then(work, work)
+  return boardQueue
+}
+
 /** Hand the board back to the game after a drill, lesson or review detour. */
 async function restorePlayBoard() {
+  return queueBoardWork(() => restorePlayBoardInner())
+}
+
+async function restorePlayBoardInner() {
   if (state.boardOwner === 'game') return
   state.boardOwner = 'game'
   state.board.clearAnnotations()
@@ -798,6 +813,9 @@ function enterDrillMode() {
     $('drill-empty').classList.remove('hidden')
     $('drill-live').classList.add('hidden')
     $('drill-extra-card').classList.toggle('hidden', rankWeaknesses(state.profile, { limit: 1 }).length === 0)
+    // There is nothing to drill, so the board must not keep the position it
+    // was left with, unplayable, from wherever the student came from.
+    restorePlayBoard()
     return
   }
   $('drill-empty').classList.add('hidden')
@@ -1525,6 +1543,9 @@ function openLesson(lessonId) {
 function closeLesson() {
   exitLessonMode()
   state.lesson = null
+  // Without this the board keeps the lesson position, the lesson caption and
+  // no move input while the browse list is showing.
+  restorePlayBoard()
   $('learn-lesson-card').classList.add('hidden')
   $('learn-browse-card').classList.remove('hidden')
   renderLessonList()
@@ -1532,7 +1553,7 @@ function closeLesson() {
 
 function exitLessonMode() {
   if (state.mode === 'lesson') state.mode = state.finished ? 'idle' : 'play'
-  state.board.disableInput()
+  queueBoardWork(() => state.board.disableInput())
 }
 
 function currentLessonPosition() {
@@ -1540,6 +1561,10 @@ function currentLessonPosition() {
 }
 
 async function loadLessonPosition(index) {
+  return queueBoardWork(() => loadLessonPositionInner(index))
+}
+
+async function loadLessonPositionInner(index) {
   const lesson = state.lesson
   if (!lesson) return
   state.lessonIndex = Math.max(0, Math.min(index, lesson.positions.length - 1))
