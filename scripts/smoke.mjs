@@ -453,7 +453,93 @@ async function main() {
     )
     record('library.clearLibrary empties the store entirely', library.afterClearCount === 0, String(library.afterClearCount))
 
-    /* 8. dark mode: an OS/browser dark preference must never invert either
+    /* 8. lessons stay playable. The board is handed between the game, lessons
+       and drills by async functions. When two of those overlapped, a trailing
+       disableInput() landed on top of the enableInput() a lesson had just
+       done: the position rendered correctly, the caption was right and
+       nothing threw, but no piece would move. The first lesson of a session
+       always worked, so this walks the journey a student actually takes -
+       open a lesson, go back to the list, open a different one - and then
+       drags the answer with real mouse events. */
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1440, height: 2000, deviceScaleFactor: 1, mobile: false,
+    })
+    const lessonJourney = await cdp.eval(async () => {
+      const pause = (ms) => new Promise((r) => setTimeout(r, ms))
+      const openable = () => [...document.querySelectorAll('#panel-learn button')]
+        .filter((b) => /continue lesson|start lesson|open lesson|review lesson/i.test(b.textContent))
+
+      document.querySelector('.tab[data-tab="learn"]').click()
+      await pause(400)
+      const available = openable().length
+      openable()[0].click()
+      await pause(900)
+      const firstInput = window.chessCoach.state.board.inputColour
+
+      const back = [...document.querySelectorAll('#panel-learn button')]
+        .find((b) => /back to lessons|back to all lessons|all lessons/i.test(b.textContent))
+      if (back) back.click()
+      await pause(700)
+      const afterBackOwner = window.chessCoach.state.boardOwner
+      const afterBackCaption = document.getElementById('board-caption').textContent
+
+      const again = openable()
+      ;(again[1] || again[0]).click()
+      await pause(1100)
+      return {
+        available,
+        firstInput,
+        afterBackOwner,
+        afterBackCaption,
+        secondInput: window.chessCoach.state.board.inputColour,
+        secondEnabled: Boolean(document.querySelector('svg.cm-chessboard g.board.input-enabled')),
+      }
+    })
+    record('the lesson list offers lessons to open', lessonJourney.available > 1, `${lessonJourney.available} lessons`)
+    record('the first lesson accepts move input', lessonJourney.firstInput !== null, `input=${lessonJourney.firstInput}`)
+    record(
+      'leaving a lesson hands the board back to the game',
+      lessonJourney.afterBackOwner === 'game' && !lessonJourney.afterBackCaption.startsWith('Lesson:'),
+      `owner=${lessonJourney.afterBackOwner}`,
+    )
+    record(
+      'a lesson opened after another lesson still accepts move input',
+      lessonJourney.secondInput !== null && lessonJourney.secondEnabled,
+      `input=${lessonJourney.secondInput}`,
+    )
+
+    const answerSquares = await cdp.eval(async () => {
+      const { Chess } = await import('chess.js')
+      const s = window.chessCoach.state
+      const position = s.lesson.positions[s.lessonIndex]
+      const move = new Chess(position.fen).move(position.answer)
+      const centre = (square) => {
+        const r = document.querySelector(`[data-square="${square}"]`).getBoundingClientRect()
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 }
+      }
+      return { answer: position.answer, from: centre(move.from), to: centre(move.to) }
+    })
+    const mouse = (type, at, buttons) =>
+      cdp.send('Input.dispatchMouseEvent', { type, x: at.x, y: at.y, button: 'left', clickCount: 1, buttons })
+    await mouse('mouseMoved', answerSquares.from, 0)
+    await mouse('mousePressed', answerSquares.from, 1)
+    await sleep(120)
+    await mouse('mouseMoved', answerSquares.to, 1)
+    await sleep(120)
+    await mouse('mouseReleased', answerSquares.to, 0)
+    await sleep(900)
+    const lessonGraded = await cdp.eval(() => ({
+      answered: window.chessCoach.state.lessonAnswered,
+      verdict: document.getElementById('learn-verdict').textContent.trim(),
+    }))
+    record(
+      'dragging the answer onto a lesson board plays and grades the move',
+      lessonGraded.answered === true && lessonGraded.verdict.length > 0,
+      `${answerSquares.answer} - ${lessonGraded.verdict.slice(0, 50)}`,
+    )
+    await cdp.send('Emulation.clearDeviceMetricsOverride')
+
+    /* 9. dark mode: an OS/browser dark preference must never invert either
        page. This is a real-browser check of the exact historical defect
        described in the project brief (an automatic prefers-color-scheme
        block turned the app dark while the landing page stayed light) -
@@ -479,7 +565,7 @@ async function main() {
     )
     await cdp.send('Emulation.setEmulatedMedia', { features: [] })
 
-    /* 9. nothing broke along the way */
+    /* 10. nothing broke along the way */
     const noise = [...cdp.consoleErrors, ...cdp.pageErrors].filter(
       (m) => !/favicon|lichess|net::ERR_INTERNET|Failed to load resource: the server responded with a status of 404/i.test(m),
     )
