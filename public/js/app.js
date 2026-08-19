@@ -7,7 +7,7 @@
 import { Chess } from 'chess.js'
 import { Board, ARROW_TYPE, MARKER_TYPE } from './board.js'
 import { Engine } from './engine.js'
-import { annotateGame } from './analysis.js'
+import { annotateGame, findTurningPoint } from './analysis.js'
 import { tagMove, summarisePatterns, PATTERN_LIBRARY } from './patterns.js'
 import { lookupOpening, outOfBookPly, shouldFlagDeviation, describeDeviation } from './openings.js'
 import * as coach from './coach.js'
@@ -50,6 +50,7 @@ const state = {
   finished: false,
   thinking: false,
   annotation: null,
+  turningPoint: null,
   taggedMoves: [],
   patternSummary: [],
   puzzles: [],
@@ -60,6 +61,7 @@ const state = {
   profile: emptyProfile(),
   deviationShown: false,
   hintStage: 0,
+  liveCoach: { previousRegister: null, previousEvalCp: null, advice: null },
 
   /* which surface currently owns the board, so switching tabs can hand it
      back to the game instead of leaving a drill or lesson position up */
@@ -131,6 +133,8 @@ async function boot() {
     newGame,
     loadPgnGame,
     runReview,
+    retryFromTurningPoint,
+    showLiveCoachAdvice,
     nextDrill,
     selectTab,
     openLesson,
@@ -178,6 +182,7 @@ function wireUi() {
   $('btn-hint').addEventListener('click', showHint)
   $('btn-finish').addEventListener('click', finishGame)
   $('btn-review').addEventListener('click', runReview)
+  $('btn-retry-turning').addEventListener('click', retryFromTurningPoint)
   $('btn-load-pgn').addEventListener('click', () => loadPgnGame())
   $('btn-dismiss-deviation').addEventListener('click', () => $('deviation-card').classList.add('hidden'))
   $('btn-drill-next').addEventListener('click', nextDrill)
@@ -273,10 +278,13 @@ async function newGame() {
   state.boardOwner = 'game'
   state.finished = false
   state.annotation = null
+  state.turningPoint = null
   state.taggedMoves = []
   state.patternSummary = []
   state.deviationShown = false
   state.hintStage = 0
+  resetLiveCoach()
+  renderLiveCoach(null)
   state.gameId = `g${Date.now()}`
 
   await state.engine.newGame()
@@ -297,8 +305,10 @@ async function newGame() {
   setCaption(`You are ${state.playerColour === 'w' ? 'White' : 'Black'} against a ${state.elo}-rated engine.`)
   selectTab('play')
 
-  if (state.chess.turn() === state.playerColour) enablePlayerInput()
-  else engineMove()
+  if (state.chess.turn() === state.playerColour) {
+    enablePlayerInput()
+    refreshEval()
+  } else engineMove()
 }
 
 function enablePlayerInput() {
@@ -443,8 +453,11 @@ async function loadPgnGame(pgnText, colour) {
   state.boardOwner = 'game'
   state.finished = true
   state.annotation = null
+  state.turningPoint = null
   state.taggedMoves = []
   state.patternSummary = []
+  resetLiveCoach()
+  renderLiveCoach(null)
   state.gameId = `g${Date.now()}`
 
   state.board.clearAnnotations()
@@ -488,12 +501,107 @@ async function syncBoard() {
 async function refreshEval() {
   if (state.mode !== 'play' || state.finished) return
   try {
-    const r = await state.engine.search(state.chess.fen(), { depth: 10, multipv: 1 })
+    const fen = state.chess.fen()
+    const r = await state.engine.search(fen, { depth: 10, multipv: 3 })
     const white = state.chess.turn() === 'w' ? r.cp : -r.cp
     updateEvalBar(white)
+    showLiveCoachAdvice({
+      evalCp: state.playerColour === 'w' ? white : -white,
+      mate: r.mate,
+      fen,
+      ply: state.chess.history().length,
+      bestSan: sanFromUci(fen, r.best),
+      bestLine: sanLineFromPv(fen, r.lines?.[0]?.pv || []),
+      candidates: candidateAdvice(fen, r.lines || []),
+    })
   } catch {
-    /* eval is cosmetic */
+    /* eval and live coaching are cosmetic */
   }
+}
+
+
+function resetLiveCoach() {
+  state.liveCoach = { previousRegister: null, previousEvalCp: null, advice: null }
+}
+
+function showLiveCoachAdvice(data = {}) {
+  const advice = coach.liveCoachAdvice({
+    ...data,
+    playerColour: state.playerColour,
+    previousRegister: state.liveCoach.previousRegister,
+    previousEvalCp: state.liveCoach.previousEvalCp,
+  })
+  state.liveCoach.previousRegister = advice.register
+  state.liveCoach.previousEvalCp = advice.evalCp
+  if (advice.shouldSpeak && advice.text) state.liveCoach.advice = advice
+  else if (!state.liveCoach.advice) state.liveCoach.advice = advice
+  renderLiveCoach(advice)
+  return advice
+}
+
+function renderLiveCoach(latest) {
+  const card = $('live-coach-card')
+  if (!card) return
+  const shown = state.liveCoach?.advice
+  const register = latest?.register || shown?.register || 'waiting'
+  card.classList.remove('hidden', 'is-winning', 'is-fighting', 'is-lost')
+  card.classList.add(liveCoachClass(register))
+  $('live-coach-register').textContent = liveCoachLabel(register)
+  $('live-coach-score').textContent = latest && Number.isFinite(latest.winPercent)
+    ? `${latest.winPercent.toFixed(1)} percent win chance`
+    : 'Waiting for the next position'
+  $('live-coach-text').textContent = shown?.text || 'Play a move. I will speak when the position changes enough to matter.'
+}
+
+function liveCoachClass(register) {
+  const values = coach.LIVE_COACH_REGISTERS || {}
+  if (register === values.learning) return 'is-lost'
+  if (register === values.fighting) return 'is-fighting'
+  return 'is-winning'
+}
+
+function liveCoachLabel(register) {
+  const values = coach.LIVE_COACH_REGISTERS || {}
+  if (register === values.learning) return 'Point of no return'
+  if (register === values.fighting) return 'Still savable'
+  if (register === values.converting) return 'Play to win'
+  return 'Live coach'
+}
+
+function sanFromUci(fen, uci) {
+  if (!uci) return null
+  try {
+    const probe = new Chess(fen)
+    const move = probe.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] })
+    return move?.san || null
+  } catch {
+    return null
+  }
+}
+
+function sanLineFromPv(fen, pv = []) {
+  const probe = new Chess(fen)
+  const line = []
+  for (const uci of pv.slice(0, 5)) {
+    try {
+      const move = probe.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] })
+      if (!move) break
+      line.push(move.san)
+    } catch {
+      break
+    }
+  }
+  return line
+}
+
+function candidateAdvice(fen, lines = []) {
+  return lines
+    .map((line) => {
+      const san = sanFromUci(fen, line.pv?.[0])
+      if (!san) return null
+      return { san, cp: line.cp ?? 0, mate: line.mate, line: sanLineFromPv(fen, line.pv || []) }
+    })
+    .filter(Boolean)
 }
 
 function updateEvalBar(cpWhite) {
@@ -593,7 +701,7 @@ async function showHint() {
 /* ----------------------------------------------------------------- review */
 
 function hideReviewCards() {
-  for (const id of ['review-summary-card', 'coach-card', 'mistakes-card']) $(id).classList.add('hidden')
+  for (const id of ['review-summary-card', 'coach-card', 'mistakes-card', 'turning-point-card']) $(id).classList.add('hidden')
   $('mistake-detail').classList.add('hidden')
 }
 
@@ -633,6 +741,7 @@ async function runReview() {
 
     state.annotation = annotation
     state.taggedMoves = tagged
+    state.turningPoint = findTurningPoint({ ...annotation, moves: tagged })
     state.patternSummary = summarisePatterns(tagged.filter((m) => m.isPlayer))
 
     renderReview()
@@ -717,26 +826,97 @@ function renderReview() {
     stat('Engine avg', `${s.opponentAcpl}`, ''),
   ].join('')
 
+  renderTurningPoint()
+
   const mistakes = state.taggedMoves
     .filter((m) => m.isPlayer && ['blunder', 'mistake', 'inaccuracy'].includes(m.classification))
     .sort((a, b) => b.loss - a.loss)
 
-  $('mistakes-card').classList.toggle('hidden', mistakes.length === 0)
-  $('mistake-list').innerHTML = mistakes
-    .map(
-      (m, i) => `<li data-ply="${m.ply}" class="${i === 0 ? 'is-active' : ''}">
+  const turningPly = state.turningPoint?.status === 'found' ? state.turningPoint.highlightPly : null
+  const reviewMoves = [...mistakes]
+  if (turningPly && !reviewMoves.some((m) => m.ply === turningPly)) {
+    const turningMove = state.taggedMoves.find((m) => m.ply === turningPly)
+    if (turningMove) reviewMoves.unshift(turningMove)
+  }
+
+  $('mistakes-card').classList.toggle('hidden', reviewMoves.length === 0)
+  $('mistake-list').innerHTML = reviewMoves
+    .map((m, i) => {
+      const isTurning = m.ply === turningPly
+      const label = isTurning ? 'point of no return' : (m.tags?.[0]?.label || m.classification)
+      return `<li data-ply="${m.ply}" class="${i === 0 ? 'is-active' : ''}${isTurning ? ' is-turning-point' : ''}">
         <span class="dot ${m.classification}"></span>
         <span class="move">${m.moveNumber}${m.colour === 'w' ? '.' : '...'} ${m.san}</span>
-        <span class="muted small">${m.tags?.[0]?.label || m.classification}</span>
+        <span class="muted small">${label}</span>
         <span class="loss">-${(m.loss / 100).toFixed(1)}</span>
-      </li>`,
-    )
+      </li>`
+    })
     .join('')
 
   $('mistake-list').querySelectorAll('li').forEach((li) => {
     li.addEventListener('click', () => showMistake(Number(li.dataset.ply), li))
   })
-  if (mistakes.length) showMistake(mistakes[0].ply, $('mistake-list').querySelector('li'))
+  if (reviewMoves.length) showMistake(reviewMoves[0].ply, $('mistake-list').querySelector('li'))
+}
+
+
+function renderTurningPoint() {
+  const tp = state.turningPoint
+  const card = $('turning-point-card')
+  if (!tp || !card) return
+  card.classList.remove('hidden', 'is-found')
+  if (tp.status === 'found') card.classList.add('is-found')
+  $('turning-point-kind').textContent = tp.status === 'found' ? (tp.kind || 'found') : tp.status
+  $('turning-point-text').textContent = tp.explanation || 'No turning point was found.'
+  const moveText = tp.status === 'found'
+    ? `Move ${tp.moveNumber || tp.ply}: ${tp.playedMove?.san || 'unknown move'}. Better was ${tp.bestSan || 'unknown'}.`
+    : 'No retry position is available for this review.'
+  $('turning-point-move').textContent = moveText
+  const btn = $('btn-retry-turning')
+  btn.disabled = !(tp.status === 'found' && tp.retryFen)
+}
+
+async function retryFromTurningPoint() {
+  const tp = state.turningPoint
+  if (!tp || tp.status !== 'found' || !tp.retryFen) return false
+  dismissOnboarding()
+  const playedSan = tp.playedMove?.san || 'the game move'
+  state.chess = new Chess(tp.retryFen)
+  state.mode = 'play'
+  state.boardOwner = 'game'
+  state.finished = false
+  state.thinking = false
+  state.annotation = null
+  state.turningPoint = null
+  state.taggedMoves = []
+  state.patternSummary = []
+  state.puzzles = []
+  state.queue = []
+  state.currentPuzzle = null
+  state.hintStage = 0
+  resetLiveCoach()
+  renderLiveCoach(null)
+  hideReviewCards()
+  renderMoves()
+  updateEvalBar(0)
+  $('btn-finish').disabled = false
+  $('btn-takeback').disabled = true
+  $('btn-hint').disabled = false
+  $('btn-review').disabled = true
+  $('review-status').textContent = 'Retry loaded. Play this position differently, then review the new line.'
+  await state.engine.newGame()
+  await queueBoardWork(async () => {
+    state.board.clearAnnotations()
+    await state.board.setOrientation(state.playerColour)
+    await state.board.setPosition(state.chess.fen(), false)
+    state.board.disableInput()
+    if (state.chess.turn() === state.playerColour) state.board.enableInput(state.playerColour)
+  })
+  setCaption(`Retry from the point of no return: play something better than ${playedSan}.`)
+  selectTab('play')
+  if (state.chess.turn() !== state.playerColour) engineMove()
+  else refreshEval()
+  return true
 }
 
 function stat(k, v, cls) {
@@ -748,13 +928,15 @@ async function showMistake(ply, li) {
   if (!move) return
   $('mistake-list').querySelectorAll('li').forEach((el) => el.classList.toggle('is-active', el === li))
 
-  state.mode = 'browse'
-  state.boardOwner = 'review'
-  state.board.disableInput()
-  state.board.clearAnnotations()
-  await state.board.setPosition(move.fenBefore, true)
-  state.board.arrow(move.uci.slice(0, 2), move.uci.slice(2, 4), ARROW_TYPE.danger)
-  if (move.bestMove) state.board.arrow(move.bestMove.slice(0, 2), move.bestMove.slice(2, 4), ARROW_TYPE.success)
+  await queueBoardWork(async () => {
+    state.mode = 'browse'
+    state.boardOwner = 'review'
+    state.board.disableInput()
+    state.board.clearAnnotations()
+    await state.board.setPosition(move.fenBefore, true)
+    state.board.arrow(move.uci.slice(0, 2), move.uci.slice(2, 4), ARROW_TYPE.danger)
+    if (move.bestMove) state.board.arrow(move.bestMove.slice(0, 2), move.bestMove.slice(2, 4), ARROW_TYPE.success)
+  })
   setCaption(`Move ${move.moveNumber}: you played ${move.san} (red). The engine prefers ${move.bestSan} (green).`)
 
   const detail = $('mistake-detail')
@@ -1070,13 +1252,14 @@ function resetProfile() {
 function renderMoves() {
   const history = state.chess.history()
   const classes = new Map((state.taggedMoves || []).map((m) => [m.ply, m.classification]))
+  const turningPly = state.turningPoint?.status === 'found' ? state.turningPoint.highlightPly : null
   const rows = []
   for (let i = 0; i < history.length; i += 2) {
     const n = i / 2 + 1
     const white = history[i]
     const black = history[i + 1]
-    const wc = classes.get(i + 1) || ''
-    const bc = classes.get(i + 2) || ''
+    const wc = `${classes.get(i + 1) || ''}${turningPly === i + 1 ? ' turning-point' : ''}`.trim()
+    const bc = `${classes.get(i + 2) || ''}${turningPly === i + 2 ? ' turning-point' : ''}`.trim()
     rows.push(
       `<li><span class="num">${n}.</span><span class="san ${wc}">${white}</span>${black ? `<span class="san ${bc}">${black}</span>` : ''}</li>`,
     )

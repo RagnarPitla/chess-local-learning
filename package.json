@@ -18,7 +18,11 @@
     "ci:local:quick": "bash scripts/local-ci.sh --quick",
     "ci:cron:install": "bash scripts/local-ci-cron.sh install",
     "ci:cron:remove": "bash scripts/local-ci-cron.sh remove",
-    "ci:cron:status": "bash scripts/local-ci-cron.sh status"
+    "ci:cron:status": "bash scripts/local-ci-cron.sh status",
+    "qa:agent": "node scripts/qa-agent.mjs",
+    "qa:cron:install": "bash scripts/qa-agent-cron.sh install",
+    "qa:cron:remove": "bash scripts/qa-agent-cron.sh remove",
+    "qa:cron:status": "bash scripts/qa-agent-cron.sh status"
   },
   "keywords": [
     "chess",
