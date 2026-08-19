@@ -17,3 +17,4 @@ scratch-*
 .scratch-*
 .theme-verify-scratch/
 .local-ci/
+.smoke-runtime/

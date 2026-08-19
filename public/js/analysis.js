@@ -32,6 +32,14 @@ export const THRESHOLDS = {
   good: 15,
 }
 
+export const TURNING_POINT_DEFAULTS = {
+  savableWinPercent: 15,
+  winningWinPercent: 50,
+  catastrophicWinDrop: 20,
+  slideMinWinDrop: 3,
+  recoveryBreakWinPercent: 8,
+}
+
 /* --------------------------------------------------------------- scoring */
 
 export function clampEval(cp) {
@@ -77,6 +85,18 @@ export function classifyLoss(loss, { winBefore, winAfter } = {}) {
   if (loss >= THRESHOLDS.inaccuracy) return MOVE_CLASS.inaccuracy
   if (loss >= THRESHOLDS.good) return MOVE_CLASS.good
   return MOVE_CLASS.best
+}
+
+export function positionRecoverability(evalCp, options = {}) {
+  const savableWinPercent = options.savableWinPercent ?? TURNING_POINT_DEFAULTS.savableWinPercent
+  const cp = Number(evalCp)
+  const win = Number.isFinite(cp) ? winPercent(cp) : null
+
+  return {
+    recoverable: win !== null && win >= savableWinPercent,
+    winPercent: win,
+    savableWinPercent,
+  }
 }
 
 /* -------------------------------------------------------------- notation */
@@ -273,4 +293,177 @@ export function topMistakes(annotation, n = 3) {
     .filter((m) => m.isPlayer && (m.classification === 'blunder' || m.classification === 'mistake' || m.classification === 'inaccuracy'))
     .sort((a, b) => b.loss - a.loss)
     .slice(0, n)
+}
+
+export function findTurningPoint(annotation, options = {}) {
+  const opts = { ...TURNING_POINT_DEFAULTS, ...options }
+  if (!annotation || !Array.isArray(annotation.moves)) {
+    return emptyTurningPoint('invalid', opts, 'No annotated move list was provided.')
+  }
+
+  const playerColour = annotation.playerColour || inferPlayerColour(annotation.moves)
+  if (!playerColour) {
+    return emptyTurningPoint('no-player-moves', opts, 'No student moves were found in the annotation.')
+  }
+
+  const playerMoves = annotation.moves
+    .filter((move) => move && move.isPlayer)
+    .map((move) => describePlayerMove(move, playerColour, opts))
+    .filter(Boolean)
+
+  if (!playerMoves.length) {
+    return emptyTurningPoint('no-player-moves', opts, 'No student moves were found in the annotation.')
+  }
+
+  const finalMove = playerMoves.at(-1)
+  const peakWinPercent = Math.max(...playerMoves.flatMap((move) => [move.winBefore, move.winAfter]))
+  const wasNeverWinning = peakWinPercent < opts.winningWinPercent
+
+  if (finalMove.winAfter >= opts.savableWinPercent) {
+    return {
+      ...emptyTurningPoint('not-lost', opts, 'The final evaluated position is still savable, so there is no point of no return to highlight.'),
+      context: buildTurningContext(playerColour, finalMove.winAfter, peakWinPercent, wasNeverWinning, playerMoves.length),
+    }
+  }
+
+  const crossings = playerMoves.filter((move) => move.winBefore >= opts.savableWinPercent && move.winAfter < opts.savableWinPercent)
+  if (!crossings.length) {
+    return {
+      ...emptyTurningPoint('never-savable', opts, 'The student never had a savable position in the analysed move list.'),
+      context: buildTurningContext(playerColour, finalMove.winAfter, peakWinPercent, wasNeverWinning, playerMoves.length),
+    }
+  }
+
+  const crossing = crossings.at(-1)
+  const kind = crossing.winDrop >= opts.catastrophicWinDrop || crossing.classification === MOVE_CLASS.blunder
+    ? 'single-blunder'
+    : 'slow-decline'
+  const start = kind === 'single-blunder' ? crossing : findSlideStart(playerMoves, crossing, opts)
+  const slideMoves = playerMoves
+    .filter((move) => move.ply >= start.ply && move.ply <= crossing.ply)
+    .map((move) => ({
+      ply: move.ply,
+      san: move.san,
+      winBefore: roundWin(move.winBefore),
+      winAfter: roundWin(move.winAfter),
+      winDrop: roundWin(move.winDrop),
+      classification: move.classification,
+    }))
+
+  return {
+    status: 'found',
+    kind,
+    ply: start.ply,
+    moveNumber: start.moveNumber ?? null,
+    playedMove: {
+      san: start.san ?? null,
+      uci: start.uci ?? null,
+      colour: start.colour ?? playerColour,
+    },
+    bestMove: start.bestMove ?? null,
+    bestSan: start.bestSan ?? null,
+    bestLine: Array.isArray(start.bestLine) ? start.bestLine : [],
+    retryFen: start.fenBefore ?? null,
+    highlightPly: start.ply,
+    winBefore: roundWin(start.winBefore),
+    winAfter: roundWin(start.winAfter),
+    winDrop: roundWin(start.winDrop),
+    classification: start.classification ?? null,
+    explanation: explainTurningPoint(kind, start, crossing, opts),
+    boundary: { savableWinPercent: opts.savableWinPercent },
+    slide: {
+      startPly: start.ply,
+      endPly: crossing.ply,
+      moves: slideMoves,
+    },
+    context: buildTurningContext(playerColour, finalMove.winAfter, peakWinPercent, wasNeverWinning, playerMoves.length),
+  }
+}
+
+function inferPlayerColour(moves) {
+  const playerMove = moves.find((move) => move && move.isPlayer && (move.colour === 'w' || move.colour === 'b'))
+  return playerMove?.colour ?? null
+}
+
+function emptyTurningPoint(status, opts, explanation) {
+  return {
+    status,
+    kind: null,
+    ply: null,
+    moveNumber: null,
+    playedMove: null,
+    bestMove: null,
+    bestSan: null,
+    bestLine: [],
+    retryFen: null,
+    highlightPly: null,
+    winBefore: null,
+    winAfter: null,
+    winDrop: null,
+    classification: null,
+    explanation,
+    boundary: { savableWinPercent: opts.savableWinPercent },
+    slide: null,
+    context: null,
+  }
+}
+
+function describePlayerMove(move, playerColour, opts) {
+  const evalBefore = evalForPlayer(move, 'Before', playerColour)
+  const evalAfter = evalForPlayer(move, 'After', playerColour)
+  if (!Number.isFinite(evalBefore) || !Number.isFinite(evalAfter)) return null
+
+  const winBefore = positionRecoverability(evalBefore, opts).winPercent
+  const winAfter = positionRecoverability(evalAfter, opts).winPercent
+  return {
+    ...move,
+    winBefore,
+    winAfter,
+    winDrop: Math.max(0, winBefore - winAfter),
+  }
+}
+
+function evalForPlayer(move, suffix, playerColour) {
+  const whiteValue = Number(move[`eval${suffix}White`])
+  if (Number.isFinite(whiteValue)) return toColourPov(whiteValue, playerColour)
+
+  const moverValue = Number(move[`eval${suffix}`])
+  if (!Number.isFinite(moverValue)) return null
+  return move.colour === playerColour ? moverValue : -moverValue
+}
+
+function findSlideStart(playerMoves, crossing, opts) {
+  let start = crossing
+  const crossingIndex = playerMoves.findIndex((move) => move.ply === crossing.ply)
+  for (let i = crossingIndex - 1; i >= 0; i--) {
+    const previous = playerMoves[i]
+    const next = playerMoves[i + 1]
+    const meaningfulDrop = previous.winDrop >= opts.slideMinWinDrop ||
+      [MOVE_CLASS.inaccuracy, MOVE_CLASS.mistake, MOVE_CLASS.blunder].includes(previous.classification)
+    const recovered = next.winBefore - previous.winAfter > opts.recoveryBreakWinPercent
+    if (!meaningfulDrop || recovered) break
+    start = previous
+  }
+  return start
+}
+
+function explainTurningPoint(kind, start, crossing, opts) {
+  if (kind === 'single-blunder') {
+    return `The game was still savable before ${start.san || `ply ${start.ply}`}, then that move dropped the student's win chance below ${opts.savableWinPercent}%. Retry from the position before it.`
+  }
+  return `The loss was a gradual slide: the final decline started with ${start.san || `ply ${start.ply}`} and crossed below ${opts.savableWinPercent}% by ${crossing.san || `ply ${crossing.ply}`}. Retry from the start of that slide.`
+}
+
+function buildTurningContext(playerColour, finalWinPercent, peakWinPercent, wasNeverWinning, playerMoveCount) {
+  return {
+    playerColour,
+    finalWinPercent: roundWin(finalWinPercent),
+    peakWinPercent: roundWin(peakWinPercent),
+    wasNeverWinning,
+    playerMoveCount,
+  }
+}
+
+function roundWin(value) {
+  return Number.isFinite(value) ? Number(value.toFixed(1)) : null
 }

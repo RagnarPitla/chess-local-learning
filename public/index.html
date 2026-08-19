@@ -91,6 +91,15 @@
         <button id="btn-new" class="primary wide" type="button">Start game</button>
       </div>
 
+
+      <section class="card live-coach-card hidden" id="live-coach-card" aria-live="polite">
+        <div class="live-coach-head">
+          <h2>Win coach <span class="chip" id="live-coach-register">Live coach</span></h2>
+          <span class="chip" id="live-coach-score">Waiting for the next position</span>
+        </div>
+        <div class="prose" id="live-coach-text">Play a move. I will speak when the position changes enough to matter.</div>
+      </section>
+
       <!-- ----------------------------------------------- VARIATION PANEL -->
       <section class="card var-card" id="variation-card" aria-labelledby="variation-heading">
         <div class="var-header">
@@ -240,6 +249,14 @@
       <div class="card hidden" id="coach-card">
         <h2>Coach <span class="chip" id="coach-source"></span></h2>
         <div class="prose" id="coach-text"></div>
+      </div>
+
+
+      <div class="card turning-point-card hidden" id="turning-point-card">
+        <h2>Point of no return <span class="chip" id="turning-point-kind">-</span></h2>
+        <p class="muted small" id="turning-point-move">No retry position is available for this review.</p>
+        <div class="prose" id="turning-point-text"></div>
+        <button class="primary wide" id="btn-retry-turning" type="button" disabled>Retry from that position</button>
       </div>
 
       <div class="card hidden" id="mistakes-card">

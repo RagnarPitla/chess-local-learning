@@ -13,8 +13,7 @@
  */
 
 import { spawn } from 'node:child_process'
-import { mkdtemp, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -45,6 +44,13 @@ const SAMPLE_PGN = `[Event "Smoke test"]
 
 1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ Ke6
 8. Nc3 *`
+
+const LOST_PGN = `[Event "Smoke lost game"]
+[White "Student"]
+[Black "Engine"]
+[Result "0-1"]
+
+1. f3 e5 2. g4 Qh4# 0-1`
 
 const results = []
 let failures = 0
@@ -180,16 +186,22 @@ async function main() {
 
   console.log(`\nchess-local-learning smoke test\n  chrome: ${chromePath}`)
 
+  const smokeRoot = join(root, '.smoke-runtime')
+  const runId = `${Date.now()}-${process.pid}`
+  const dataDir = join(smokeRoot, `data-${runId}`)
+  const profileDir = join(smokeRoot, `chrome-${runId}`)
+  await mkdir(dataDir, { recursive: true })
+  await mkdir(profileDir, { recursive: true })
+
   const server = spawn(nodeBin, ['server.js'], {
     cwd: root,
-    env: { ...process.env, PORT: String(APP_PORT), DATA_DIR: join(tmpdir(), 'chess-smoke-data') },
+    env: { ...process.env, PORT: String(APP_PORT), DATA_DIR: dataDir },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   const serverLog = []
   server.stdout.on('data', (d) => serverLog.push(String(d)))
   server.stderr.on('data', (d) => serverLog.push(String(d)))
 
-  const profileDir = await mkdtemp(join(tmpdir(), 'chess-smoke-chrome-'))
   const debugPort = APP_PORT + 1
   let chrome
   let cdp
@@ -261,6 +273,37 @@ async function main() {
     const evalHeight = await cdp.eval(() => document.getElementById('evalbar-fill').style.height)
     record('evaluation bar updates', Boolean(evalHeight), evalHeight)
 
+    const liveCoachText = await cdp.waitFor(
+      () => {
+        const el = document.getElementById('live-coach-text')
+        return el && el.textContent.trim().length > 40 ? el.textContent.trim() : false
+      },
+      { timeout: 30000, label: 'live coach advice' },
+    )
+    record('live coach guidance appears during play', liveCoachText.length > 40, `${liveCoachText.slice(0, 70)}...`)
+
+    const unsavableCoach = await cdp.eval(() => {
+      const fen = window.chessCoach.state.chess.fen()
+      const advice = window.chessCoach.showLiveCoachAdvice({
+        evalCp: -1200,
+        fen,
+        ply: window.chessCoach.state.chess.history().length,
+        bestSan: 'Qh5',
+        candidates: [{ san: 'Qh5', cp: -900 }],
+      })
+      return {
+        register: advice.register,
+        text: document.getElementById('live-coach-text').textContent,
+        label: document.getElementById('live-coach-register').textContent,
+        lostClass: document.getElementById('live-coach-card').classList.contains('is-lost'),
+      }
+    })
+    record(
+      'live coach changes character when the game is unsavable',
+      unsavableCoach.lostClass && /point of no return/i.test(unsavableCoach.label) && /gone|training rep|turning point/i.test(unsavableCoach.text),
+      `${unsavableCoach.label}: ${unsavableCoach.text.slice(0, 70)}`,
+    )
+
     /* 3. import a real game */
     const loaded = await cdp.eval((pgn) => window.chessCoach.loadPgnGame(pgn, 'b'), { args: [SAMPLE_PGN] })
     record('pgn import parses', loaded === true)
@@ -300,6 +343,7 @@ async function main() {
     const tags = await cdp.eval(() => window.chessCoach.state.patternSummary.map((p) => p.id))
     record('mistakes carry pattern tags', tags.length > 0, tags.join(', ') || 'none')
 
+
     const coachText = await cdp.waitFor(
       () => {
         const el = document.getElementById('coach-text')
@@ -335,6 +379,50 @@ async function main() {
       'solution reveal explains why',
       graded.explain.length > 40 && graded.explain !== 'Explaining.',
       graded.explain.replace(/\n+/g, ' ').slice(0, 80),
+    )
+
+
+    const lostLoaded = await cdp.eval((pgn) => window.chessCoach.loadPgnGame(pgn, 'w'), { args: [LOST_PGN] })
+    record('lost game import for turning point retry parses', lostLoaded === true)
+    await cdp.eval(() => {
+      document.getElementById('sel-depth').value = '10'
+      return window.chessCoach.runReview()
+    })
+    const turningReview = await cdp.eval(() => {
+      const tp = window.chessCoach.state.turningPoint
+      const row = document.querySelector('#mistake-list li.is-turning-point')
+      return {
+        status: tp?.status,
+        san: tp?.playedMove?.san,
+        bestSan: tp?.bestSan,
+        retryFen: tp?.retryFen,
+        rowText: row?.textContent || '',
+        moveText: document.getElementById('turning-point-move')?.textContent || '',
+      }
+    })
+    record(
+      'turning point highlights the expected losing move',
+      turningReview.status === 'found' && /g4/.test(turningReview.san || turningReview.rowText),
+      `${turningReview.san || 'none'}; ${turningReview.moveText}`,
+    )
+
+    const retryResult = await cdp.eval(async () => {
+      const retryFen = window.chessCoach.state.turningPoint?.retryFen
+      const ok = await window.chessCoach.retryFromTurningPoint()
+      await new Promise((r) => setTimeout(r, 1200))
+      return {
+        ok,
+        retryFen,
+        currentFen: window.chessCoach.state.chess.fen(),
+        inputColour: window.chessCoach.state.board.inputColour,
+        enabled: Boolean(document.querySelector('svg.cm-chessboard g.board.input-enabled')),
+        mode: window.chessCoach.state.mode,
+      }
+    })
+    record(
+      'retry reloads the turning point and leaves the board interactive',
+      retryResult.ok === true && retryResult.currentFen === retryResult.retryFen && retryResult.inputColour !== null && retryResult.enabled,
+      `mode=${retryResult.mode}, input=${retryResult.inputColour}`,
     )
 
     /* 6. profile updated and persisted */
@@ -575,7 +663,7 @@ async function main() {
     if (chrome) chrome.kill()
     server.kill()
     await rm(profileDir, { recursive: true, force: true }).catch(() => {})
-    await rm(join(tmpdir(), 'chess-smoke-data'), { recursive: true, force: true }).catch(() => {})
+    await rm(dataDir, { recursive: true, force: true }).catch(() => {})
   }
 
   const passed = results.length - failures
