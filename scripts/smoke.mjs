@@ -627,7 +627,62 @@ async function main() {
     )
     await cdp.send('Emulation.clearDeviceMetricsOverride')
 
-    /* 9. dark mode: an OS/browser dark preference must never invert either
+    /* 9. depth and borders: the board, cards, controls and pieces must retain
+       the restrained elevation that separates them on the white page. These
+       are rendered-style checks, not source-string checks, so they catch a
+       selector losing to vendor CSS or a rule being removed during a build. */
+    const depthStyles = await cdp.eval(() => {
+      const boardWrap = getComputedStyle(document.querySelector('.board-wrap'))
+      const card = getComputedStyle(document.querySelector('.card'))
+      const button = getComputedStyle(document.querySelector('button:not(:disabled)'))
+      const piece = getComputedStyle(document.querySelector('#board use.piece'))
+      return {
+        boardBorder: boardWrap.borderTopWidth,
+        boardShadow: boardWrap.boxShadow,
+        cardBorder: card.borderTopWidth,
+        cardShadow: card.boxShadow,
+        buttonShadow: button.boxShadow,
+        pieceFilter: piece.filter,
+      }
+    })
+    record(
+      'the board shell renders a visible border and shadow',
+      parseFloat(depthStyles.boardBorder) >= 1 && depthStyles.boardShadow !== 'none',
+      `border=${depthStyles.boardBorder}, shadow=${depthStyles.boardShadow}`,
+    )
+    record(
+      'cards and buttons retain restrained elevation',
+      parseFloat(depthStyles.cardBorder) >= 1
+        && depthStyles.cardShadow !== 'none'
+        && depthStyles.buttonShadow !== 'none',
+      `card=${depthStyles.cardShadow}, button=${depthStyles.buttonShadow}`,
+    )
+    record(
+      'piece silhouettes retain an edge shadow',
+      depthStyles.pieceFilter !== 'none',
+      depthStyles.pieceFilter,
+    )
+
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 1100,
+      deviceScaleFactor: 1,
+      mobile: false,
+    })
+    const mobileDepth = await cdp.eval(() => ({
+      viewport: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      boardWidth: document.querySelector('.board').getBoundingClientRect().width,
+    }))
+    record(
+      'the bordered board stays inside a 390px viewport',
+      mobileDepth.scrollWidth <= mobileDepth.viewport + 1
+        && mobileDepth.boardWidth < mobileDepth.viewport,
+      `viewport=${mobileDepth.viewport}, scroll=${mobileDepth.scrollWidth}, board=${mobileDepth.boardWidth}`,
+    )
+    await cdp.send('Emulation.clearDeviceMetricsOverride')
+
+    /* 10. dark mode: an OS/browser dark preference must never invert either
        page. This is a real-browser check of the exact historical defect
        described in the project brief (an automatic prefers-color-scheme
        block turned the app dark while the landing page stayed light) -
@@ -653,7 +708,7 @@ async function main() {
     )
     await cdp.send('Emulation.setEmulatedMedia', { features: [] })
 
-    /* 10. nothing broke along the way */
+    /* 11. nothing broke along the way */
     const noise = [...cdp.consoleErrors, ...cdp.pageErrors].filter(
       (m) => !/favicon|lichess|net::ERR_INTERNET|Failed to load resource: the server responded with a status of 404/i.test(m),
     )

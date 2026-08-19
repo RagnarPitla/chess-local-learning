@@ -138,6 +138,11 @@ root + twelve group ids, open `preview.html` (or copy its pattern) to check
 legibility at 24/45/64/128px before shipping, then hand the UI agent the
 one-line `board.js` change (`pieces: { file: '/assets/pieces/<name>.svg' }`).
 
+For the next generated source set, use
+`docs/CHESS-PIECE-RENDER-BRIEF.md`. It defines the Nano Banana master prompt,
+the twelve source filenames, the 2048 x 2048 geometry targets and the exact
+40 x 40 sprite contract used by this board.
+
 ## Authoring notes (how this was iterated)
 
 The pieces were drafted, rendered with headless Chrome and visually
