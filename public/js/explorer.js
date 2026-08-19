@@ -249,6 +249,10 @@ function classifyFromFen(fen) {
 
 const CENTRE_SQUARES = new Set(['d4', 'd5', 'e4', 'e5'])
 const BACK_RANK = { w: '1', b: '8' }
+const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 99 }
+const PIECE_NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }
+const KINGSIDE_FILES = new Set(['f', 'g', 'h'])
+const SAFE_EXCHANGE_LOSS_LIMIT = 0
 
 /** Canonical pawn-skeleton signature: two positions with the same pawns on
  * the same squares (regardless of piece placement or move order) count as
@@ -283,6 +287,161 @@ function tagPrinciples(move) {
   if ((move.piece === 'n' || move.piece === 'b') && move.from[1] === BACK_RANK[move.color]) tags.push('development')
   if (CENTRE_SQUARES.has(move.to)) tags.push('centre')
   return tags
+}
+
+function materialSafety(fen, san) {
+  const chess = new Chess(fen)
+  const played = chess.move(san)
+  if (!played) return { materialLoss: 99, bestReply: null, gain: 0, loss: 99 }
+
+  const gain = PIECE_VALUES[played.captured] || 0
+  const exchange = resolveExchange(chess, played.to, played.color, gain)
+  return {
+    materialLoss: Math.max(0, -exchange.score),
+    bestReply: exchange.line[0] ?? null,
+    gain,
+    loss: Math.max(0, gain - exchange.score),
+    exchangeLine: exchange.line,
+  }
+}
+
+function resolveExchange(chess, target, originalColour, delta, depth = 0) {
+  if (depth > 16) return { score: delta, line: [] }
+
+  const turn = chess.turn()
+  const captures = chess
+    .moves({ verbose: true })
+    .filter((move) => move.to === target && move.captured)
+    .sort((a, b) => (PIECE_VALUES[a.piece] || 0) - (PIECE_VALUES[b.piece] || 0))
+
+  if (!captures.length) return { score: delta, line: [] }
+
+  let best = { score: delta, line: [] }
+  for (const move of captures) {
+    const next = new Chess(chess.fen())
+    next.move(move.san)
+    const captureValue = PIECE_VALUES[move.captured] || 0
+    const nextDelta = delta + (turn === originalColour ? captureValue : -captureValue)
+    const child = resolveExchange(next, target, originalColour, nextDelta, depth + 1)
+    const line = [move.san, ...child.line]
+    if (turn === originalColour) {
+      if (child.score > best.score) best = { score: child.score, line }
+    } else if (child.score < best.score) {
+      best = { score: child.score, line }
+    }
+  }
+  return best
+}
+
+function checkResponse(fen, move) {
+  const chess = new Chess(fen)
+  if (!chess.inCheck()) return null
+  if (move.piece === 'k') {
+    return {
+      score: -10,
+      reason: `it moves the king to ${move.to}, but gives up castling rights if they were still available`,
+    }
+  }
+  if (move.captured) {
+    return {
+      score: 16,
+      reason: `it answers the check by capturing on ${move.to}`,
+    }
+  }
+  return {
+    score: 16,
+    reason: `it blocks the check by placing the ${PIECE_NAMES[move.piece]} on ${move.to}`,
+  }
+}
+
+function cleanSan(value) {
+  return String(value || '')
+    .replace(/[+#?!]+/g, '')
+    .replace(/x/g, '')
+}
+
+function planTokensFromText(text) {
+  const tokens = new Set()
+  for (const raw of String(text || '').match(/\b(?:O-O-O|O-O|[KQRBN]?[a-h]?[1-8]?x?[a-h][1-8]|[a-h][1-8]-[a-h][1-8])\b/g) || []) {
+    const token = raw.replace(/[,.;:]/g, '')
+    if (token.includes('-')) {
+      const [from, to] = token.split('-')
+      tokens.add(from)
+      tokens.add(to)
+    } else {
+      tokens.add(cleanSan(token))
+    }
+  }
+  return tokens
+}
+
+function planTextsForSide(openingContext) {
+  if (!openingContext?.plans) return []
+  const sidePlans = openingContext.sideToMove === 'b' ? openingContext.plans.black : openingContext.plans.white
+  return [...(sidePlans || []), ...(openingContext.plans.breaks || [])]
+}
+
+function planAlignment(move, openingContext) {
+  const texts = planTextsForSide(openingContext)
+  if (!texts.length) return { score: 0, reasons: [] }
+
+  const san = cleanSan(move.san)
+  const tokens = new Set()
+  for (const text of texts) {
+    for (const token of planTokensFromText(text)) tokens.add(token)
+  }
+
+  const reasons = []
+  let score = 0
+  if (tokens.has(san)) {
+    score += 6
+    if (san === 'Be3') reasons.push('the Be3 bishop development starts the English Attack structure')
+    else if (san === 'Bg5') reasons.push('the Bg5 bishop pin is the sharp Najdorf option named in the plan')
+    else if (san === 'f3') reasons.push('the f3 pawn move supports Be3 and prepares a kingside pawn storm')
+    else if (san === 'g4') reasons.push('the g4 pawn thrust is the attacking lever named in the plan')
+    else if (move.piece === 'p' && CENTRE_SQUARES.has(move.to)) reasons.push(`the ${move.to} central pawn break is named in the plan`)
+    else if (move.piece === 'p' && ['a', 'b', 'c'].includes(move.to[0])) reasons.push(`the ${move.to} queenside pawn break is named in the plan`)
+    else if (move.piece === 'p' && KINGSIDE_FILES.has(move.to[0])) reasons.push(`the ${move.to} kingside pawn break is named in the plan`)
+    else reasons.push(`the ${PIECE_NAMES[move.piece]} move ${move.san} is named in the recorded plan`)
+  } else if (move.piece === 'p' && tokens.has(move.to)) {
+    score += 4
+    reasons.push(`the pawn move reaches ${move.to}, a square named in the plan`)
+  }
+
+  const joined = texts.join(' ').toLowerCase()
+  const toFile = move.to[0]
+  if (joined.includes('kingside') && KINGSIDE_FILES.has(toFile)) {
+    score += move.piece === 'p' ? 3 : 1
+    const rankIdea = move.to[1] >= '4' ? 'by taking fourth-rank space' : 'by preparing the third-rank support squares'
+    reasons.push(`it supports the kingside plan with a ${PIECE_NAMES[move.piece]} on the ${toFile}-file ${rankIdea}`)
+  }
+  if (joined.includes('english attack') && ['Be3', 'Qd2', 'f3', 'g4', 'h4'].includes(san)) {
+    score += 4
+    reasons.push('it fits the English Attack setup')
+  }
+  if (openingContext?.struct === 'Najdorf' && ['Be3', 'Qd2', 'f3', 'g4', 'h4', 'Bg5', 'f4'].includes(san)) {
+    score += 3
+    reasons.push('it is a standard Najdorf attacking idea')
+  }
+
+  return { score, reasons: [...new Set(reasons)] }
+}
+
+function moveReason(move) {
+  if (move.san.includes('#')) return 'it gives checkmate'
+  if (move.san.includes('+')) return `it gives check while moving the ${PIECE_NAMES[move.piece]} from ${move.from} to ${move.to}`
+  if (move.captured) return `it wins a ${PIECE_NAMES[move.captured]} on ${move.to} without failing the immediate recapture check`
+  if (move.flags.includes('k') || move.flags.includes('q')) return 'it castles and improves king safety'
+  if ((move.piece === 'n' || move.piece === 'b') && move.from[1] === BACK_RANK[move.color]) {
+    return `it develops the ${PIECE_NAMES[move.piece]} from ${move.from} to ${move.to}`
+  }
+  if (CENTRE_SQUARES.has(move.to)) return `it moves from ${move.from} to ${move.to}, one of the central squares`
+  if (move.piece === 'p') {
+    const distance = Math.abs(Number(move.to[1]) - Number(move.from[1]))
+    const pace = distance > 1 ? 'uses a two-square pawn advance to claim space' : 'uses a one-square pawn move to keep the structure flexible'
+    return `it ${pace} with the ${move.from[0]}-pawn from ${move.from} to ${move.to}`
+  }
+  return `it repositions the ${PIECE_NAMES[move.piece]} from ${move.from} to ${move.to}`
 }
 
 /**
@@ -324,9 +483,12 @@ function replayFen(sanMoves, extra) {
   }
 }
 
-function buildBookCandidate(entry, total, sanMoves, legalBySan) {
+function buildBookCandidate(entry, total, sanMoves, legalBySan, baseFen, openingContext) {
   const move = legalBySan.get(entry.san)
   const fen = replayFen(sanMoves, entry.sampleLine) // sampleLine continues from the current position
+  const safety = move ? materialSafety(baseFen, move.san) : { materialLoss: 0, bestReply: null, gain: 0, loss: 0 }
+  const plan = move ? planAlignment(move, openingContext) : { score: 0, reasons: [] }
+  const response = move ? checkResponse(baseFen, move) : null
   return {
     entry: {
       san: entry.san,
@@ -343,6 +505,12 @@ function buildBookCandidate(entry, total, sanMoves, legalBySan) {
     },
     isMain: entry.isMain,
     principles: move ? tagPrinciples(move) : [],
+    planScore: plan.score,
+    planReasons: plan.reasons,
+    checkResponse: response,
+    moveReason: move ? moveReason(move) : '',
+    materialLoss: safety.materialLoss,
+    bestReply: safety.bestReply,
     sharp: isSharpName(entry.name),
     structureKey: fen ? pawnStructureKey(fen) : entry.san,
   }
@@ -351,8 +519,11 @@ function buildBookCandidate(entry, total, sanMoves, legalBySan) {
 /** Out-of-book fallback: score every legal move purely on structural/principle
  * grounds, since there is no book popularity data to lean on here. This is
  * what guarantees the trainer never shows an empty panel. */
-function buildFallbackCandidates(legalMoves) {
+function buildFallbackCandidates(legalMoves, openingContext = null, baseFen = START_FEN) {
   return legalMoves.map((move) => {
+    const safety = materialSafety(baseFen, move.san)
+    const plan = planAlignment(move, openingContext)
+    const response = checkResponse(baseFen, move)
     return {
       entry: {
         san: move.san,
@@ -366,9 +537,18 @@ function buildFallbackCandidates(legalMoves) {
         novelty: true,
         sampleLine: [move.san],
         stats: null,
+        contextEco: openingContext?.eco ?? null,
+        contextName: openingContext?.name ?? null,
+        contextPlans: openingContext?.plans ?? null,
       },
       isMain: false,
       principles: tagPrinciples(move),
+      planScore: plan.score,
+      planReasons: plan.reasons,
+      checkResponse: response,
+      moveReason: moveReason(move),
+      materialLoss: safety.materialLoss,
+      bestReply: safety.bestReply,
       sharp: false,
       tactical: tacticalWeight(move),
       structureKey: move.after ? pawnStructureKey(move.after) : move.san,
@@ -386,12 +566,21 @@ function buildFallbackCandidates(legalMoves) {
  */
 function scoreCandidate(candidate, level) {
   const isBook = candidate.entry.isBook
-  let score = isBook ? candidate.entry.share * 100 : candidate.tactical ?? 0
-  score += candidate.principles.length * (isBook ? 6 : 15)
+  let score = isBook ? candidate.entry.share * 100 : 0
+  score += (candidate.planScore || 0) * (isBook ? 20 : 80)
+  score += (candidate.checkResponse?.score || 0) * (isBook ? 20 : 80)
+  score += candidate.principles.length * (isBook ? 6 : 20)
+  score += Math.min(candidate.tactical ?? 0, 1000) / (isBook ? 40 : 80)
+  score -= (candidate.materialLoss || 0) * (isBook ? 1200 : 1400)
   if (level === 'beginner' && candidate.sharp) score -= 60
   if (level === 'advanced' && candidate.sharp) score += 15
   if (level === 'expert' && candidate.sharp) score += 40
   return score
+}
+
+function exchangeAcceptable(candidate) {
+  if ((candidate.materialLoss || 0) <= SAFE_EXCHANGE_LOSS_LIMIT) return true
+  return Boolean(candidate.checkResponse && candidate.entry.san !== undefined && candidate.materialLoss <= PIECE_VALUES.n && !candidate.entry.san.startsWith('K'))
 }
 
 /**
@@ -420,24 +609,53 @@ function joinPhrases(list) {
 const asNouns = (tags) => joinPhrases(tags.map((t) => PRINCIPLE_NOUNS[t] ?? t))
 const asVerbs = (tags) => joinPhrases(tags.map((t) => PRINCIPLE_VERBS[t] ?? t))
 
+function describeOpeningContext(openingContext) {
+  if (!openingContext?.name) return ''
+  const eco = openingContext.eco ? ` (ECO ${openingContext.eco})` : ''
+  const structure = openingContext.struct ? `, ${openingContext.struct} structure` : ''
+  return `The last known opening is ${openingContext.name}${eco}${structure}.`
+}
+
+function describePlanContext(openingContext) {
+  const plans = openingContext?.plans
+  if (!plans) return ''
+  const sidePlans = openingContext.sideToMove === 'b' ? plans.black : plans.white
+  if (sidePlans?.length) return sidePlans[0]
+  if (plans.breaks?.length) return `Watch the main breaks: ${joinPhrases(plans.breaks)}`
+  return ''
+}
+
 /** `toppedUp` is true only when the book had SOME candidates but ran out
  * before reaching the requested count - as opposed to the position being
  * out of book from the very first move considered, which keeps its original
  * wording unchanged below. */
-function explainWhy(candidate, level, toppedUp = false) {
+function explainWhy(candidate, level, toppedUp = false, openingContext = null) {
+  const openingLine = describeOpeningContext(openingContext)
+  const planLine = describePlanContext(openingContext)
+  const planSentence = planLine ? ` Keep the plan connected to this position: ${planLine.replace(/[.!?]?$/, '.')}` : ''
   if (!candidate.entry.isBook) {
-    const reason = candidate.principles.length
-      ? `it clearly illustrates ${asNouns(candidate.principles)}`
-      : 'it is a reasonable try worth judging on its own merits'
+    const reason = candidate.planReasons?.length
+      ? candidate.planReasons[0]
+      : candidate.checkResponse
+      ? candidate.checkResponse.reason
+      : candidate.principles.length
+      ? `it clearly illustrates ${asNouns(candidate.principles)} because ${candidate.moveReason}`
+      : candidate.moveReason || 'it improves the position without losing material to a simple reply'
+    const contextSentence = openingLine ? ` ${openingLine}${planSentence}` : ''
+    const exchangeSentence =
+      candidate.materialLoss > SAFE_EXCHANGE_LOSS_LIMIT
+        ? ` It drops material by the exchange check, losing ${candidate.materialLoss}; it is shown only because the position is forcing and the choices are limited.`
+        : ' It passes the static exchange check.'
     return toppedUp
-      ? `Theory runs out before this move - it is included so you have a full set to train on - but ${reason}, so it is worth thinking through.`
-      : `Not in the book from here - your opponent (or you) went off the map - but ${reason}, so it is a good move to think through.`
+      ? `Play ${candidate.entry.san}: named theory runs out here.${exchangeSentence}${contextSentence} It is included because ${reason}.`
+      : `Play ${candidate.entry.san}: this is outside named theory.${exchangeSentence}${contextSentence} It is included because ${reason}.`
   }
+  const bookContext = openingLine ? ` ${openingLine}${planSentence}` : ''
   if (candidate.isMain) {
-    return 'The main line: the most common and best-tested continuation from this position.'
+    return `Play ${candidate.entry.san}: this is the main line, the most common and best-tested continuation from this position.${bookContext}`
   }
   if (level === 'expert' && candidate.sharp) {
-    return 'A sharp, critical try - the forcing lines here are worth memorising before it is played on you.'
+    return `Play ${candidate.entry.san}: this is a sharp, critical try, so the forcing lines are worth memorising before it is played on you.${bookContext}`
   }
   if (level === 'beginner' && candidate.principles.length) {
     const which = candidate.principles.includes('king safety')
@@ -445,12 +663,12 @@ function explainWhy(candidate, level, toppedUp = false) {
       : candidate.principles.includes('centre')
         ? 'fights for the centre'
         : 'brings a piece into the game'
-    return `A calm, principled alternative that clearly ${which} - a solid choice while the ideas are still new.`
+    return `Play ${candidate.entry.san}: this is a calm, principled alternative that clearly ${which}, a solid choice while the ideas are still new.${bookContext}`
   }
   if (candidate.principles.length) {
-    return `A known alternative that also ${asVerbs(candidate.principles)}, and leads to a different structure worth recognising.`
+    return `Play ${candidate.entry.san}: this is a known alternative that also ${asVerbs(candidate.principles)}, and leads to a different structure worth recognising.${bookContext}`
   }
-  return 'A known alternative that leads to a different structure, worth recognising so you are not surprised by it.'
+  return `Play ${candidate.entry.san}: this is a known alternative that leads to a different structure, worth recognising so you are not surprised by it.${bookContext}`
 }
 
 /**
@@ -481,7 +699,7 @@ function pickFromPool(candidates, target, level, usedStructures, { forceTop = fa
   }
 
   // Rule: the main line always gets a slot (it sorts first when forced).
-  if (forceTop) take(ranked[0])
+  if (forceTop && ranked[0]) take(ranked[0])
 
   // Rule: expert level always gets at least one sharp/critical line, if the
   // pool actually has one, rather than leaving it to chance.
@@ -494,7 +712,7 @@ function pickFromPool(candidates, target, level, usedStructures, { forceTop = fa
   // two moves that transpose into the same pawn skeleton do not both get a slot.
   for (const c of ranked) {
     if (chosen.length >= target) break
-    if (chosen.includes(c) || usedStructures.has(c.structureKey)) continue
+    if (chosen.includes(c) || (usedStructures.has(c.structureKey) && (c.planScore || 0) < 5)) continue
     take(c)
   }
 
@@ -540,12 +758,25 @@ export function trainingVariations({ sanMoves = [], count = 5, level = 'intermed
   const chess = new Chess()
   for (const san of sanMoves) chess.move(san)
   const legal = chess.moves({ verbose: true })
+  const baseFen = chess.fen()
   const legalBySan = new Map(legal.map((m) => [m.san, m]))
+  const knownOpening = lookupOpening(sanMoves)
+  const openingContext = knownOpening
+    ? {
+        eco: knownOpening.eco,
+        name: knownOpening.name,
+        struct: knownOpening.struct,
+        plans: { white: knownOpening.white, black: knownOpening.black, breaks: knownOpening.breaks },
+        sideToMove: chess.turn(),
+      }
+    : null
 
   const inBook = outOfBookPly(sanMoves) === null
   const book = inBook ? variationsFrom(sanMoves) : []
   const total = book.reduce((sum, e) => sum + e.lineCount, 0)
-  const bookCandidates = book.map((entry) => buildBookCandidate(entry, total, sanMoves, legalBySan))
+  const allBookCandidates = book
+    .map((entry) => buildBookCandidate(entry, total, sanMoves, legalBySan, baseFen, openingContext))
+  const bookCandidates = allBookCandidates.filter(exchangeAcceptable)
 
   const usedStructures = new Set()
   const bookChosen = pickFromPool(bookCandidates, target, resolvedLevel, usedStructures, {
@@ -558,17 +789,24 @@ export function trainingVariations({ sanMoves = [], count = 5, level = 'intermed
   if (shortfall > 0) {
     const chosenSans = new Set(bookChosen.map((c) => c.entry.san))
     const remainingLegal = legal.filter((move) => !chosenSans.has(move.san))
-    const fallbackCandidates = buildFallbackCandidates(remainingLegal)
-    toppedUpChosen = pickFromPool(fallbackCandidates, shortfall, resolvedLevel, usedStructures)
+    const fallbackCandidates = buildFallbackCandidates(remainingLegal, openingContext, baseFen)
+    const safeFallback = fallbackCandidates.filter(exchangeAcceptable)
+    toppedUpChosen = pickFromPool(safeFallback, shortfall, resolvedLevel, usedStructures)
+    const remainingShortfall = shortfall - toppedUpChosen.length
+    if (remainingShortfall > 0) {
+      const toppedUpSans = new Set(toppedUpChosen.map((c) => c.entry.san))
+      const leastBadFallback = fallbackCandidates.filter((candidate) => !toppedUpSans.has(candidate.entry.san))
+      toppedUpChosen.push(...pickFromPool(leastBadFallback, remainingShortfall, resolvedLevel, usedStructures))
+    }
   }
 
   // toppedUp (for wording only) distinguishes "book had something but ran
   // out" from "this position had no book candidates at all" - both still
   // carry isBook: false, which is the field that actually marks them.
-  const toppedUp = bookCandidates.length > 0
+  const toppedUp = allBookCandidates.length > 0
   return [
-    ...bookChosen.map((c) => ({ ...c.entry, whyThisOne: explainWhy(c, resolvedLevel, false), level: resolvedLevel })),
-    ...toppedUpChosen.map((c) => ({ ...c.entry, whyThisOne: explainWhy(c, resolvedLevel, toppedUp), level: resolvedLevel })),
+    ...bookChosen.map((c) => ({ ...c.entry, whyThisOne: explainWhy(c, resolvedLevel, false, openingContext), level: resolvedLevel })),
+    ...toppedUpChosen.map((c) => ({ ...c.entry, whyThisOne: explainWhy(c, resolvedLevel, toppedUp, openingContext), level: resolvedLevel })),
   ]
 }
 

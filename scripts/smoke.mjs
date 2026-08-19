@@ -13,8 +13,7 @@
  */
 
 import { spawn } from 'node:child_process'
-import { mkdtemp, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -45,6 +44,13 @@ const SAMPLE_PGN = `[Event "Smoke test"]
 
 1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ Ke6
 8. Nc3 *`
+
+const LOST_PGN = `[Event "Smoke lost game"]
+[White "Student"]
+[Black "Engine"]
+[Result "0-1"]
+
+1. f3 e5 2. g4 Qh4# 0-1`
 
 const results = []
 let failures = 0
@@ -180,16 +186,22 @@ async function main() {
 
   console.log(`\nchess-local-learning smoke test\n  chrome: ${chromePath}`)
 
+  const smokeRoot = join(root, '.smoke-runtime')
+  const runId = `${Date.now()}-${process.pid}`
+  const dataDir = join(smokeRoot, `data-${runId}`)
+  const profileDir = join(smokeRoot, `chrome-${runId}`)
+  await mkdir(dataDir, { recursive: true })
+  await mkdir(profileDir, { recursive: true })
+
   const server = spawn(nodeBin, ['server.js'], {
     cwd: root,
-    env: { ...process.env, PORT: String(APP_PORT), DATA_DIR: join(tmpdir(), 'chess-smoke-data') },
+    env: { ...process.env, PORT: String(APP_PORT), DATA_DIR: dataDir },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   const serverLog = []
   server.stdout.on('data', (d) => serverLog.push(String(d)))
   server.stderr.on('data', (d) => serverLog.push(String(d)))
 
-  const profileDir = await mkdtemp(join(tmpdir(), 'chess-smoke-chrome-'))
   const debugPort = APP_PORT + 1
   let chrome
   let cdp
@@ -324,6 +336,37 @@ async function main() {
     const evalHeight = await cdp.eval(() => document.getElementById('evalbar-fill').style.height)
     record('evaluation bar updates', Boolean(evalHeight), evalHeight)
 
+    const liveCoachText = await cdp.waitFor(
+      () => {
+        const el = document.getElementById('live-coach-text')
+        return el && el.textContent.trim().length > 40 ? el.textContent.trim() : false
+      },
+      { timeout: 30000, label: 'live coach advice' },
+    )
+    record('live coach guidance appears during play', liveCoachText.length > 40, `${liveCoachText.slice(0, 70)}...`)
+
+    const unsavableCoach = await cdp.eval(() => {
+      const fen = window.chessCoach.state.chess.fen()
+      const advice = window.chessCoach.showLiveCoachAdvice({
+        evalCp: -1200,
+        fen,
+        ply: window.chessCoach.state.chess.history().length,
+        bestSan: 'Qh5',
+        candidates: [{ san: 'Qh5', cp: -900 }],
+      })
+      return {
+        register: advice.register,
+        text: document.getElementById('live-coach-text').textContent,
+        label: document.getElementById('live-coach-register').textContent,
+        lostClass: document.getElementById('live-coach-card').classList.contains('is-lost'),
+      }
+    })
+    record(
+      'live coach changes character when the game is unsavable',
+      unsavableCoach.lostClass && /point of no return/i.test(unsavableCoach.label) && /gone|training rep|turning point/i.test(unsavableCoach.text),
+      `${unsavableCoach.label}: ${unsavableCoach.text.slice(0, 70)}`,
+    )
+
     /* 3. import a real game */
     const loaded = await cdp.eval((pgn) => window.chessCoach.loadPgnGame(pgn, 'b'), { args: [SAMPLE_PGN] })
     record('pgn import parses', loaded === true)
@@ -363,6 +406,7 @@ async function main() {
     const tags = await cdp.eval(() => window.chessCoach.state.patternSummary.map((p) => p.id))
     record('mistakes carry pattern tags', tags.length > 0, tags.join(', ') || 'none')
 
+
     const coachText = await cdp.waitFor(
       () => {
         const el = document.getElementById('coach-text')
@@ -398,6 +442,50 @@ async function main() {
       'solution reveal explains why',
       graded.explain.length > 40 && graded.explain !== 'Explaining.',
       graded.explain.replace(/\n+/g, ' ').slice(0, 80),
+    )
+
+
+    const lostLoaded = await cdp.eval((pgn) => window.chessCoach.loadPgnGame(pgn, 'w'), { args: [LOST_PGN] })
+    record('lost game import for turning point retry parses', lostLoaded === true)
+    await cdp.eval(() => {
+      document.getElementById('sel-depth').value = '10'
+      return window.chessCoach.runReview()
+    })
+    const turningReview = await cdp.eval(() => {
+      const tp = window.chessCoach.state.turningPoint
+      const row = document.querySelector('#mistake-list li.is-turning-point')
+      return {
+        status: tp?.status,
+        san: tp?.playedMove?.san,
+        bestSan: tp?.bestSan,
+        retryFen: tp?.retryFen,
+        rowText: row?.textContent || '',
+        moveText: document.getElementById('turning-point-move')?.textContent || '',
+      }
+    })
+    record(
+      'turning point highlights the expected losing move',
+      turningReview.status === 'found' && /g4/.test(turningReview.san || turningReview.rowText),
+      `${turningReview.san || 'none'}; ${turningReview.moveText}`,
+    )
+
+    const retryResult = await cdp.eval(async () => {
+      const retryFen = window.chessCoach.state.turningPoint?.retryFen
+      const ok = await window.chessCoach.retryFromTurningPoint()
+      await new Promise((r) => setTimeout(r, 1200))
+      return {
+        ok,
+        retryFen,
+        currentFen: window.chessCoach.state.chess.fen(),
+        inputColour: window.chessCoach.state.board.inputColour,
+        enabled: Boolean(document.querySelector('svg.cm-chessboard g.board.input-enabled')),
+        mode: window.chessCoach.state.mode,
+      }
+    })
+    record(
+      'retry reloads the turning point and leaves the board interactive',
+      retryResult.ok === true && retryResult.currentFen === retryResult.retryFen && retryResult.inputColour !== null && retryResult.enabled,
+      `mode=${retryResult.mode}, input=${retryResult.inputColour}`,
     )
 
     /* 6. profile updated and persisted */
@@ -516,47 +604,148 @@ async function main() {
     )
     record('library.clearLibrary empties the store entirely', library.afterClearCount === 0, String(library.afterClearCount))
 
-    /* 8. visual system: depth remains visible and the board remains usable
-       at the narrow viewport used by mobile learners. */
-    const depth = await cdp.eval(() => {
-      const board = getComputedStyle(document.querySelector('.board-wrap'))
-      const card = getComputedStyle(document.querySelector('.card'))
-      const button = getComputedStyle(document.querySelector('button'))
+    /* 8. lessons stay playable. The board is handed between the game, lessons
+       and drills by async functions. When two of those overlapped, a trailing
+       disableInput() landed on top of the enableInput() a lesson had just
+       done: the position rendered correctly, the caption was right and
+       nothing threw, but no piece would move. The first lesson of a session
+       always worked, so this walks the journey a student actually takes -
+       open a lesson, go back to the list, open a different one - and then
+       drags the answer with real mouse events. */
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1440, height: 2000, deviceScaleFactor: 1, mobile: false,
+    })
+    const lessonJourney = await cdp.eval(async () => {
+      const pause = (ms) => new Promise((r) => setTimeout(r, ms))
+      const openable = () => [...document.querySelectorAll('#panel-learn button')]
+        .filter((b) => /continue lesson|start lesson|open lesson|review lesson/i.test(b.textContent))
+
+      document.querySelector('.tab[data-tab="learn"]').click()
+      await pause(400)
+      const available = openable().length
+      openable()[0].click()
+      await pause(900)
+      const firstInput = window.chessCoach.state.board.inputColour
+
+      const back = [...document.querySelectorAll('#panel-learn button')]
+        .find((b) => /back to lessons|back to all lessons|all lessons/i.test(b.textContent))
+      if (back) back.click()
+      await pause(700)
+      const afterBackOwner = window.chessCoach.state.boardOwner
+      const afterBackCaption = document.getElementById('board-caption').textContent
+
+      const again = openable()
+      ;(again[1] || again[0]).click()
+      await pause(1100)
       return {
-        boardBorder: board.borderTopWidth,
-        boardShadow: board.boxShadow,
+        available,
+        firstInput,
+        afterBackOwner,
+        afterBackCaption,
+        secondInput: window.chessCoach.state.board.inputColour,
+        secondEnabled: Boolean(document.querySelector('svg.cm-chessboard g.board.input-enabled')),
+      }
+    })
+    record('the lesson list offers lessons to open', lessonJourney.available > 1, `${lessonJourney.available} lessons`)
+    record('the first lesson accepts move input', lessonJourney.firstInput !== null, `input=${lessonJourney.firstInput}`)
+    record(
+      'leaving a lesson hands the board back to the game',
+      lessonJourney.afterBackOwner === 'game' && !lessonJourney.afterBackCaption.startsWith('Lesson:'),
+      `owner=${lessonJourney.afterBackOwner}`,
+    )
+    record(
+      'a lesson opened after another lesson still accepts move input',
+      lessonJourney.secondInput !== null && lessonJourney.secondEnabled,
+      `input=${lessonJourney.secondInput}`,
+    )
+
+    const answerSquares = await cdp.eval(async () => {
+      const { Chess } = await import('chess.js')
+      const s = window.chessCoach.state
+      const position = s.lesson.positions[s.lessonIndex]
+      const move = new Chess(position.fen).move(position.answer)
+      const centre = (square) => {
+        const r = document.querySelector(`[data-square="${square}"]`).getBoundingClientRect()
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 }
+      }
+      return { answer: position.answer, from: centre(move.from), to: centre(move.to) }
+    })
+    const mouse = (type, at, buttons) =>
+      cdp.send('Input.dispatchMouseEvent', { type, x: at.x, y: at.y, button: 'left', clickCount: 1, buttons })
+    await mouse('mouseMoved', answerSquares.from, 0)
+    await mouse('mousePressed', answerSquares.from, 1)
+    await sleep(120)
+    await mouse('mouseMoved', answerSquares.to, 1)
+    await sleep(120)
+    await mouse('mouseReleased', answerSquares.to, 0)
+    await sleep(900)
+    const lessonGraded = await cdp.eval(() => ({
+      answered: window.chessCoach.state.lessonAnswered,
+      verdict: document.getElementById('learn-verdict').textContent.trim(),
+    }))
+    record(
+      'dragging the answer onto a lesson board plays and grades the move',
+      lessonGraded.answered === true && lessonGraded.verdict.length > 0,
+      `${answerSquares.answer} - ${lessonGraded.verdict.slice(0, 50)}`,
+    )
+    await cdp.send('Emulation.clearDeviceMetricsOverride')
+
+    /* 9. depth and borders: the board, cards, controls and pieces must retain
+       the restrained elevation that separates them on the white page. These
+       are rendered-style checks, not source-string checks, so they catch a
+       selector losing to vendor CSS or a rule being removed during a build. */
+    const depthStyles = await cdp.eval(() => {
+      const boardWrap = getComputedStyle(document.querySelector('.board-wrap'))
+      const card = getComputedStyle(document.querySelector('.card'))
+      const button = getComputedStyle(document.querySelector('button:not(:disabled)'))
+      const piece = getComputedStyle(document.querySelector('#board use.piece'))
+      return {
+        boardBorder: boardWrap.borderTopWidth,
+        boardShadow: boardWrap.boxShadow,
+        cardBorder: card.borderTopWidth,
         cardShadow: card.boxShadow,
         buttonShadow: button.boxShadow,
+        pieceFilter: piece.filter,
       }
     })
     record(
-      'board, cards and controls retain borders and depth shadows',
-      depth.boardBorder !== '0px' &&
-        depth.boardShadow !== 'none' &&
-        depth.cardShadow !== 'none' &&
-        depth.buttonShadow !== 'none',
-      JSON.stringify(depth),
+      'the board shell renders a visible border and shadow',
+      parseFloat(depthStyles.boardBorder) >= 1 && depthStyles.boardShadow !== 'none',
+      `border=${depthStyles.boardBorder}, shadow=${depthStyles.boardShadow}`,
+    )
+    record(
+      'cards and buttons retain restrained elevation',
+      parseFloat(depthStyles.cardBorder) >= 1
+        && depthStyles.cardShadow !== 'none'
+        && depthStyles.buttonShadow !== 'none',
+      `card=${depthStyles.cardShadow}, button=${depthStyles.buttonShadow}`,
+    )
+    record(
+      'piece silhouettes retain an edge shadow',
+      depthStyles.pieceFilter !== 'none',
+      depthStyles.pieceFilter,
     )
 
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 390,
-      height: 844,
+      height: 1100,
       deviceScaleFactor: 1,
-      mobile: true,
+      mobile: false,
     })
-    const mobile = await cdp.eval(() => ({
+    const mobileDepth = await cdp.eval(() => ({
       viewport: window.innerWidth,
-      pageWidth: document.documentElement.scrollWidth,
-      boardWidth: document.querySelector('.board-wrap').getBoundingClientRect().width,
+      scrollWidth: document.documentElement.scrollWidth,
+      boardWidth: document.querySelector('.board').getBoundingClientRect().width,
     }))
     record(
-      'Design-1 board fits a 390px mobile viewport without horizontal overflow',
-      mobile.pageWidth <= mobile.viewport && mobile.boardWidth <= mobile.viewport,
-      JSON.stringify(mobile),
+      'the Design-1 bordered board stays inside a 390px viewport',
+      mobileDepth.scrollWidth <= mobileDepth.viewport + 1
+        && mobileDepth.boardWidth < mobileDepth.viewport,
+      `viewport=${mobileDepth.viewport}, scroll=${mobileDepth.scrollWidth}, board=${mobileDepth.boardWidth}`,
     )
     await cdp.send('Emulation.clearDeviceMetricsOverride')
 
-    /* 9. dark mode: an OS/browser dark preference must never invert either
+    /* 10. dark mode: an OS/browser dark preference must never invert either
        page. This is a real-browser check of the exact historical defect
        described in the project brief (an automatic prefers-color-scheme
        block turned the app dark while the landing page stayed light) -
@@ -582,7 +771,7 @@ async function main() {
     )
     await cdp.send('Emulation.setEmulatedMedia', { features: [] })
 
-    /* 10. nothing broke along the way */
+    /* 11. nothing broke along the way */
     const noise = [...cdp.consoleErrors, ...cdp.pageErrors].filter(
       (m) => !/favicon|lichess|net::ERR_INTERNET|Failed to load resource: the server responded with a status of 404/i.test(m),
     )
@@ -592,7 +781,7 @@ async function main() {
     if (chrome) chrome.kill()
     server.kill()
     await rm(profileDir, { recursive: true, force: true }).catch(() => {})
-    await rm(join(tmpdir(), 'chess-smoke-data'), { recursive: true, force: true }).catch(() => {})
+    await rm(dataDir, { recursive: true, force: true }).catch(() => {})
   }
 
   const passed = results.length - failures

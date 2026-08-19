@@ -219,7 +219,7 @@ free for commercial use. `public/js/board.js` now renders the project-selected
 are recorded in `Resources/Design-1`, and
 `scripts/build-static.mjs` both excludes `staunty.svg` from `dist/` and fails
 `npm run build:check` if any file carrying a `BY-NC` / `NonCommercial` licence
-string reaches the deploy artifact. Verified end to end: 40/40 headless-Chrome
+string reaches the deploy artifact. Verified end to end: 52/52 headless-Chrome
 checks pass with the new sprite rendering, and the build check reports
 "no NonCommercial-licensed asset shipped in dist/".
 

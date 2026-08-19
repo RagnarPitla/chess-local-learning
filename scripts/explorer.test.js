@@ -21,12 +21,96 @@ import { DIFFICULTY_PRESETS, trainingVariations, classifyVariations, explainVari
 import { outOfBookPly, variationsFrom } from '../public/js/openings.js'
 
 const LEVELS = Object.keys(DIFFICULTY_PRESETS) // beginner, intermediate, advanced, expert
+const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 99 }
+const SIMPLE_RECAPTURE_LOSS_LIMIT = 1
+const CHECK_BLOCK_REGRESSION = ['b4', 'd5', 'a4', 'e5', 'd3', 'Bd6', 'f3', 'Qe7', 'b5', 'a6', 'd4', 'axb5', 'e4', 'c6', 'a5', 'exd4', 'c4', 'Bb4+']
+
+const REGRESSION_LINES = {
+  Najdorf: ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'a6', 'Be2', 'e5', 'Nb3', 'Be7', 'O-O', 'O-O'],
+  Dragon: ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'g6', 'Be3', 'Bg7', 'f3', 'O-O', 'Qd2', 'Nc6'],
+  'Open Sicilian': ['e4', 'c5', 'Nf3', 'Nc6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'e5', 'Ndb5', 'd6', 'Bg5', 'a6'],
+  'Ruy Lopez': ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Ba4', 'Nf6', 'O-O', 'Be7', 'Re1', 'b5', 'Bb3', 'd6'],
+  "Queen's Gambit": ['d4', 'd5', 'c4', 'e6', 'Nc3', 'Nf6', 'Bg5', 'Be7', 'e3', 'O-O', 'Nf3', 'h6'],
+  "King's Indian": ['d4', 'Nf6', 'c4', 'g6', 'Nc3', 'Bg7', 'e4', 'd6', 'Nf3', 'O-O', 'Be2', 'e5'],
+}
 
 /** Legal SAN moves from the position reached after replaying `sanMoves`. */
 function legalSans(sanMoves) {
   const chess = new Chess()
   for (const san of sanMoves) chess.move(san)
   return chess.moves()
+}
+
+function materialSafety(sanMoves, san) {
+  const chess = new Chess()
+  for (const move of sanMoves) chess.move(move)
+  const played = chess.move(san)
+  const gain = PIECE_VALUES[played?.captured] || 0
+  const exchange = resolveExchange(chess, played.to, played.color, gain)
+  return { materialLoss: Math.max(0, -exchange.score), bestReply: exchange.line[0] ?? null, exchangeLine: exchange.line }
+}
+
+function resolveExchange(chess, target, originalColour, delta, depth = 0) {
+  if (depth > 16) return { score: delta, line: [] }
+  const turn = chess.turn()
+  const captures = chess
+    .moves({ verbose: true })
+    .filter((move) => move.to === target && move.captured)
+    .sort((a, b) => (PIECE_VALUES[a.piece] || 0) - (PIECE_VALUES[b.piece] || 0))
+
+  if (!captures.length) return { score: delta, line: [] }
+  let best = { score: delta, line: [] }
+  for (const move of captures) {
+    const next = new Chess(chess.fen())
+    next.move(move.san)
+    const captureValue = PIECE_VALUES[move.captured] || 0
+    const nextDelta = delta + (turn === originalColour ? captureValue : -captureValue)
+    const child = resolveExchange(next, target, originalColour, nextDelta, depth + 1)
+    const line = [move.san, ...child.line]
+    if (turn === originalColour) {
+      if (child.score > best.score) best = { score: child.score, line }
+    } else if (child.score < best.score) {
+      best = { score: child.score, line }
+    }
+  }
+  return best
+}
+
+function moduloSan(reason, san) {
+  return reason.replaceAll(san, '<SAN>').replace(/^Play <SAN>:/, 'Play <SAN>:')
+}
+
+function assertTrainingContract(label, sanMoves, level) {
+  const legal = new Set(legalSans(sanMoves))
+  const requested = DIFFICULTY_PRESETS[level].variations
+  const expected = Math.min(requested, legal.size)
+  const context = classifyVariations(sanMoves).position
+  const result = trainingVariations({ sanMoves, count: requested, level })
+  const sans = result.map((v) => v.san)
+
+  assert.equal(result.length, expected, `${label}/${level}: expected ${expected} candidate moves, got ${result.length}`)
+  assert.equal(new Set(sans).size, sans.length, `${label}/${level}: duplicate move offered`)
+
+  const reasons = new Set()
+  for (const row of result) {
+    assert.ok(legal.has(row.san), `${label}/${level}: "${row.san}" is not legal`)
+    const safety = materialSafety(sanMoves, row.san)
+    assert.ok(
+      safety.materialLoss <= SIMPLE_RECAPTURE_LOSS_LIMIT,
+      `${label}/${level}/${row.san}: loses ${safety.materialLoss} after ${safety.bestReply}`,
+    )
+    const reason = row.whyThisOne || explainVariation(row, context)
+    assert.match(reason, /^[A-Z0-9]/, `${label}/${level}/${row.san}: reason must start like a sentence`)
+    assert.match(reason, /[.!?]$/, `${label}/${level}/${row.san}: reason must end with punctuation`)
+    assert.ok(reason.length >= 60, `${label}/${level}/${row.san}: reason is too thin: ${reason}`)
+    assert.ok(reason.includes(row.san), `${label}/${level}/${row.san}: reason should name the move`)
+    assert.doesNotMatch(reason, /that also (centre|development|king safety)\b/i, `${label}/${level}/${row.san}: ungrammatical noun/verb mix`)
+    assert.doesNotMatch(reason, /No specific plan is recorded here/i, `${label}/${level}/${row.san}: boilerplate explanation leaked`)
+    assert.ok(!reasons.has(reason), `${label}/${level}/${row.san}: duplicate boilerplate reason`)
+    reasons.add(reason)
+  }
+
+  return result
 }
 
 /**
@@ -134,6 +218,86 @@ test('trainingVariations returns fewer than the requested count only when the po
     const count = DIFFICULTY_PRESETS[level].variations
     const result = trainingVariations({ sanMoves: mateMoves, count, level })
     assert.equal(result.length, 0, `${level}: a mated position has no candidate moves to offer, got ${result.length}`)
+  }
+})
+
+test('trainingVariations keeps the promised count, legality, uniqueness and explanations through deep opening lines', () => {
+  for (const [lineName, moves] of Object.entries(REGRESSION_LINES)) {
+    for (let ply = 1; ply <= moves.length; ply++) {
+      const sanMoves = moves.slice(0, ply)
+      for (const level of LEVELS) {
+        assertTrainingContract(`${lineName} ply ${ply} after ${moves[ply - 1]}`, sanMoves, level)
+      }
+    }
+  }
+})
+
+test('Najdorf top-up explanations keep the Sicilian identity alive after named continuations run out', () => {
+  const sanMoves = REGRESSION_LINES.Najdorf
+  assert.equal(variationsFrom(sanMoves).length, 0, 'test assumption: this exact Najdorf line has no named child continuations')
+  const rows = assertTrainingContract('Najdorf terminal', sanMoves, 'expert')
+  const reasonsModuloSan = new Set()
+  for (const row of rows) {
+    assert.equal(row.isBook, false, `${row.san}: terminal Najdorf top-ups must be honestly marked non-book`)
+    assert.equal(row.novelty, true, `${row.san}: terminal Najdorf top-ups must be honestly marked novelties`)
+    assert.match(row.whyThisOne, /Sicilian|Najdorf/i, `${row.san}: explanation should preserve the opening identity`)
+    const genericReason = moduloSan(row.whyThisOne, row.san)
+    assert.ok(!reasonsModuloSan.has(genericReason), `${row.san}: duplicate explanation after removing SAN`)
+    reasonsModuloSan.add(genericReason)
+  }
+})
+
+test('Najdorf terminal top-ups prefer plan-named moves over arbitrary safe pawn moves', () => {
+  const sanMoves = REGRESSION_LINES.Najdorf
+  const rows = trainingVariations({ sanMoves, level: 'expert', count: 9 })
+  const sans = rows.map((row) => row.san)
+  assert.ok(sans.includes('Be3'), `expected Be3 from the Najdorf plan, got ${sans.join(', ')}`)
+  assert.ok(sans.indexOf('Be3') < sans.indexOf('a3') || !sans.includes('a3'), `Be3 should outrank arbitrary a3, got ${sans.join(', ')}`)
+  assert.ok(sans.indexOf('Be3') < sans.indexOf('a4') || !sans.includes('a4'), `Be3 should outrank arbitrary a4, got ${sans.join(', ')}`)
+})
+
+test('check-block regression: exchange evaluation keeps normal blocking moves and preserves counts', () => {
+  const legal = legalSans(CHECK_BLOCK_REGRESSION)
+  assert.deepEqual(legal, ['Nc3', 'Nd2', 'Bd2', 'Qd2', 'Ke2', 'Kf2'])
+
+  for (const level of LEVELS) {
+    const count = DIFFICULTY_PRESETS[level].variations
+    const rows = trainingVariations({ sanMoves: CHECK_BLOCK_REGRESSION, level, count })
+    assert.equal(rows.length, Math.min(count, legal.length), `${level}: must not starve a check position with six legal moves`)
+    const sans = rows.map((row) => row.san)
+    if (count >= legal.length) assert.ok(sans.includes('Nc3'), `${level}: expected Nc3 when showing every legal move in ${sans.join(', ')}`)
+
+    const nc3Safety = materialSafety(CHECK_BLOCK_REGRESSION, 'Nc3')
+    assert.ok(nc3Safety.materialLoss < PIECE_VALUES.q, `${level}: Nc3 must not be treated like a queen hang, got ${JSON.stringify(nc3Safety)}`)
+
+    const losses = rows.map((row) => materialSafety(CHECK_BLOCK_REGRESSION, row.san).materialLoss)
+    for (let i = 1; i < losses.length; i++) {
+      assert.ok(
+        losses[i - 1] <= losses[i],
+        `${level}: materially losing moves must not outrank safer moves; got ${sans.join(', ')} with losses ${losses.join(', ')}`,
+      )
+    }
+    if (sans.includes('Nc3') && sans.includes('Ke2')) {
+      assert.ok(sans.indexOf('Ke2') < sans.indexOf('Nc3'), `${level}: safe Ke2 must rank above losing Nc3 in ${sans.join(', ')}`)
+    }
+  }
+})
+
+test('forcing positions do not under-deliver when enough legal moves exist', () => {
+  const forcingPositions = [
+    CHECK_BLOCK_REGRESSION,
+    ['e4', 'e5', 'Qh5', 'Nc6', 'Bc4', 'Nf6'],
+    ['e4', 'd5', 'exd5', 'Qxd5', 'Nc3'],
+    ['d4', 'Nf6', 'c4', 'e5', 'dxe5', 'Ng4'],
+  ]
+
+  for (const sanMoves of forcingPositions) {
+    const legal = legalSans(sanMoves)
+    for (const level of LEVELS) {
+      const count = DIFFICULTY_PRESETS[level].variations
+      const rows = trainingVariations({ sanMoves, level, count })
+      assert.equal(rows.length, Math.min(count, legal.length), `${sanMoves.join(' ')}/${level}: count contract broke`)
+    }
   }
 })
 

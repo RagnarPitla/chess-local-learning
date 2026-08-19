@@ -169,6 +169,13 @@ To add another style: create `public/assets/pieces/<name>.svg` with the same
 root + twelve group ids, check legibility at 24/45/64/128px before shipping,
 then make the one-line `board.js` change.
 
+For any future higher-resolution regeneration, use
+`docs/CHESS-PIECE-RENDER-BRIEF.md`. It defines the Nano Banana master prompt,
+the twelve source filenames, 2048 x 2048 geometry targets and the exact
+40 x 40 sprite contract used by this board. The current owner-provided
+Design-1 files are 816 x 816 and remain the tested source of truth until they
+are deliberately replaced.
+
 ## Authoring notes (how this was iterated)
 
 The pieces were drafted, rendered with headless Chrome and visually

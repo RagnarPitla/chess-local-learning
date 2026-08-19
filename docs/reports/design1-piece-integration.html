@@ -109,8 +109,8 @@
         <div class="stat-row">
           <div class="stat"><b>12</b><span>source renders</span></div>
           <div class="stat"><b>12</b><span>transparent sprite tiles</span></div>
-          <div class="stat"><b>156</b><span>unit checks passed</span></div>
-          <div class="stat"><b>40/40</b><span>browser checks passed</span></div>
+          <div class="stat"><b>180</b><span>unit checks passed</span></div>
+          <div class="stat"><b>52/52</b><span>browser checks passed</span></div>
           <div class="stat"><b>0</b><span>console or request failures</span></div>
         </div>
         <blockquote>
@@ -252,7 +252,7 @@ public/assets/pieces/
             <pre><code><span class="line add">.board-wrap {</span>
 <span class="line add">  width: min(100%, 662px); padding: var(--space-2);</span>
 <span class="line add">  border: 1px solid var(--line);</span>
-<span class="line add">  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 14px 34px rgba(0,0,0,.12);</span>
+<span class="line add">  box-shadow: var(--shadow-sm);</span>
 <span class="line add">}</span>
 <span class="line add">.board { flex: 1; max-width: 620px; aspect-ratio: 1; }</span></code></pre>
           </div>
@@ -325,12 +325,12 @@ public/assets/pieces/
           <table>
             <thead><tr><th>Gate</th><th>Command or probe</th><th>Measured result</th><th>Status</th></tr></thead>
             <tbody>
-              <tr><td>Unit and contract suite</td><td><code>npm test</code></td><td>156 passed, 0 failed</td><td class="status">PASS</td></tr>
+              <tr><td>Unit and contract suite</td><td><code>npm test</code></td><td>180 passed, 0 failed</td><td class="status">PASS</td></tr>
               <tr><td>Static production build</td><td><code>npm run build</code></td><td>73 files, 8.9 MB; active sprite 533 KB</td><td class="status">PASS</td></tr>
               <tr><td>Build artifact check</td><td><code>npm run build:check</code></td><td>Design-1 present and selected; no NonCommercial asset deployed</td><td class="status">PASS</td></tr>
-              <tr><td>Real-browser loop</td><td><code>npm run test:e2e</code></td><td>40/40, including real e2-e4 drag and input restoration</td><td class="status">PASS</td></tr>
+              <tr><td>Real-browser loop</td><td><code>npm run test:e2e</code></td><td>52/52, including real e2-e4 drag and input restoration</td><td class="status">PASS</td></tr>
               <tr><td>Deterministic generation</td><td>SHA-256 before and after rebuild</td><td><code>d6f50812...ff635e</code> unchanged</td><td class="status">PASS</td></tr>
-              <tr><td>Desktop visual QA</td><td>1440 x 1000 local Chrome</td><td>662px shell, 620px board, LCP 96ms, CLS 0.0361</td><td class="status">PASS</td></tr>
+              <tr><td>Desktop visual QA</td><td>1440 x 1000 local Chrome</td><td>662px shell, 620px board, LCP 2252ms, CLS 0</td><td class="status">PASS</td></tr>
               <tr><td>Mobile visual QA</td><td>390 x 844 local Chrome</td><td>358px shell, no overflow, LCP 44ms, CLS 0.0014</td><td class="status">PASS</td></tr>
               <tr><td>Browser noise</td><td>Console and failed-request capture</td><td>0 errors, 0 failed requests</td><td class="status">PASS</td></tr>
             </tbody>
