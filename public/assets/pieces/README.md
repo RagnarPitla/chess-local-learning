@@ -1,8 +1,13 @@
 # Chess piece sprites
 
-Two original SVG sprite sheets for the board, plus a standalone preview page.
+Three project piece sets, plus a standalone preview page for the two
+hand-authored vector sets.
 
-- `faceted.svg` - the primary set. Faceted, low-poly, sculptural pieces (angular
+- `design-1.svg` - the active board set. Owner-directed, owner-provided
+  AI-assisted sculpted pieces with strong outlines, low-poly facets and compact
+  contact shadows. The deployable SVG embeds twelve optimized transparent PNG
+  tiles built from the source renders in `Resources/Design-1`.
+- `faceted.svg` - the original vector set. Faceted, low-poly, sculptural pieces (angular
   planes, chiselled geometry, no curves, no ornament), in the style of
   cast-concrete designer chess sets. White pieces are near-white with light
   grey facet shading; black pieces are charcoal with darker facet shading.
@@ -14,7 +19,25 @@ Two original SVG sprite sheets for the board, plus a standalone preview page.
   128px on white and light-grey squares, plus a full starting position on a
   monochrome board.
 
-## Style rationale
+## Design-1 source and build
+
+The selected source renders are twelve 816 x 816 PNGs in
+`Resources/Design-1`. Their neutral grey studio backgrounds are intentional.
+Run:
+
+```bash
+python3 scripts/build-design1-sprite.py
+```
+
+The authoring script fits and removes the smooth grey background, preserves
+the anti-aliased outline and compact contact shadow, aligns each piece to a
+piece-specific 40-unit target box, downsamples it to a 256 x 256 transparent
+tile and embeds it in `design-1.svg`.
+
+The script requires Python 3, Pillow and NumPy. These are authoring
+requirements only; the browser and normal app build do not need Python.
+
+## Vector-set style rationale
 
 The brief called for faceted / low-poly / sculptural pieces: flat polygon
 facets implying planes and light from the upper left, no gradients, no
@@ -70,22 +93,30 @@ All six pieces share the same base geometry (plinth at y 33.5-37, skirt top
 at y 29 in the 40x40 tile) so they visually stand on the same square at a
 consistent scale.
 
-## Licence and originality
+## Licence and provenance
 
-This artwork is original. Every path in `faceted.svg` and `silhouette.svg`
+Every path in `faceted.svg` and `silhouette.svg`
 was hand-authored for this project - no path data, control points or
 silhouettes were copied, traced or derived from Staunty, Cburnett, Merida,
 Wikimedia Commons chess sets, or any other existing chess piece set. Both
 files are released under this repository's MIT licence (see `/LICENSE` at
 the repo root), same as the rest of the codebase.
 
+Design-1 is owner-directed, owner-provided AI-assisted artwork generated for
+Ramify and selected by Ragnar for the product. The source renders are
+preserved in `Resources/Design-1` with their provenance notes. No third-party
+chess asset was intentionally supplied as an input or copied into those
+files. The artwork is included with the owner's approval for this
+MIT-licensed project. This is a provenance record, not a legal opinion about
+copyright in AI-assisted output.
+
 ## How the board uses this sprite
 
 The board is rendered by `public/js/board.js`, which points cm-chessboard at
-this project's own faceted set:
+the selected Design-1 set:
 
 ```js
-pieces: { file: new URL('../assets/pieces/faceted.svg', import.meta.url).href }
+pieces: { file: new URL('../assets/pieces/design-1.svg', import.meta.url).href }
 ```
 
 `cm-chessboard` resolves `style.pieces.file` against `assetsUrl` UNLESS the
@@ -93,7 +124,7 @@ path is itself absolute (starts with `/` or contains `://`), in which case
 `assetsUrl` is ignored and the file is loaded from that path directly.
 
 `new URL(..., import.meta.url)` is used rather than a root-absolute
-`/assets/pieces/faceted.svg` on purpose: it produces a fully-qualified URL
+`/assets/pieces/design-1.svg` on purpose: it produces a fully-qualified URL
 resolved against the location of `board.js` itself, so the sprite still
 loads when the site is deployed under a sub-path such as
 `https://user.github.io/repo-name/`, where a root-absolute path would break.
@@ -104,16 +135,15 @@ repository's MIT licence, so `staunty.svg` is also excluded from the deploy
 artifact by `scripts/build-static.mjs`, and `npm run build:check` fails the
 build if any NonCommercial-licensed asset reaches `dist/`.
 
-(or `'/assets/pieces/silhouette.svg'` for the icon-style set). No other
-change is required: no `assetsUrl` edit, no `tileSize` override, no server
-config, nothing in `server.js`. This has been verified against the real
-`Chessboard` class from `cm-chessboard` 8.12.19 rendering a full starting
-position with this exact absolute-path config, not just by opening the SVG
-directly.
+To switch to a retained vector set, change only the filename to
+`faceted.svg` or `silhouette.svg`. No `assetsUrl`, `tileSize` or server change
+is required. The active Design-1 path has been verified against the real
+`Chessboard` class from cm-chessboard 8.12.19: all twelve embedded tiles load,
+the full starting position renders and a real e2-e4 drag is accepted.
 
 ## Sprite contract (for adding a new piece style)
 
-Both sprites match the exact contract `cm-chessboard` 8.12.19 expects,
+All three sprites match the exact contract `cm-chessboard` 8.12.19 expects,
 verified against the library's own shipped sprites
 (`node_modules/cm-chessboard/assets/pieces/staunty.svg` and `standard.svg`)
 rather than assumed:
@@ -130,18 +160,21 @@ rather than assumed:
   40 and is a pure JS config value (`style.pieces.tileSize`) - it is never
   read from the SVG itself. So a new style only needs to keep the 40-units-
   per-piece convention; it does not need to declare tileSize anywhere.
-- No gradients, filters or embedded rasters - flat fills only, so pieces
-  stay crisp at small sizes and the file stays small.
+- The contents of each group may be vector paths or an embedded transparent
+  raster. `faceted.svg` and `silhouette.svg` use flat vector fills;
+  `design-1.svg` deliberately embeds optimized 256 x 256 PNG tiles because
+  its selected source artwork is raster.
 
 To add another style: create `public/assets/pieces/<name>.svg` with the same
-root + twelve group ids, open `preview.html` (or copy its pattern) to check
-legibility at 24/45/64/128px before shipping, then hand the UI agent the
-one-line `board.js` change (`pieces: { file: '/assets/pieces/<name>.svg' }`).
+root + twelve group ids, check legibility at 24/45/64/128px before shipping,
+then make the one-line `board.js` change.
 
-For the next generated source set, use
+For any future higher-resolution regeneration, use
 `docs/CHESS-PIECE-RENDER-BRIEF.md`. It defines the Nano Banana master prompt,
-the twelve source filenames, the 2048 x 2048 geometry targets and the exact
-40 x 40 sprite contract used by this board.
+the twelve source filenames, 2048 x 2048 geometry targets and the exact
+40 x 40 sprite contract used by this board. The current owner-provided
+Design-1 files are 816 x 816 and remain the tested source of truth until they
+are deliberately replaced.
 
 ## Authoring notes (how this was iterated)
 

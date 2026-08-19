@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ramify Design-1 Piece Integration Review</title>
+  <style>
+    :root{
+      --blue:#0078d4;--blue-dark:#004578;--ink:#201f1e;--muted:#605e5c;
+      --line:#edebe9;--soft:#f3f2f1;--green:#107c10;--red:#a4262c;
+      --amber:#8a5700;--white:#fff;--shadow:0 8px 24px rgba(0,0,0,.08)
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:#faf9f8;color:var(--ink);font:15px/1.55 "Segoe UI",Arial,sans-serif}
+    a{color:var(--blue);text-decoration:none}
+    a:hover{text-decoration:underline}
+    code,pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+    .banner{background:var(--blue-dark);color:#fff;padding:8px 24px;font-size:.78rem;font-weight:600;letter-spacing:.08em}
+    header{background:#fff;border-bottom:1px solid var(--line);padding:36px max(28px,calc((100vw - 1240px)/2))}
+    header h1{margin:0;font-size:2rem;line-height:1.15}
+    header p{max-width:850px;margin:10px 0 18px;color:var(--muted);font-size:1.03rem}
+    .pills{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--soft);font-size:.78rem}
+    .pill.good{border-color:#badbad;background:#f1faee;color:#0b5a0b}
+    .shell{display:grid;grid-template-columns:210px minmax(0,1000px);gap:28px;max-width:1260px;margin:0 auto;padding:28px 24px 56px}
+    .side-nav{position:sticky;top:20px;align-self:start;background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .side-nav strong{display:block;padding:7px 8px;font-size:.77rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+    .side-nav a{display:block;padding:7px 8px;border-left:2px solid transparent;color:var(--ink);font-size:.86rem}
+    .side-nav a:hover{border-left-color:var(--blue);background:#f8fbfe;text-decoration:none}
+    main{min-width:0}
+    section{scroll-margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:6px;margin-bottom:18px;padding:26px;box-shadow:0 2px 8px rgba(0,0,0,.035)}
+    h2{margin:0 0 15px;font-size:1.35rem}
+    h3{margin:24px 0 10px;font-size:1.02rem}
+    p{margin:8px 0}
+    .stat-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:18px 0}
+    .stat{border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:5px;padding:13px;background:#fff}
+    .stat b{display:block;font-size:1.55rem;line-height:1.1}
+    .stat span{color:var(--muted);font-size:.78rem}
+    .toc{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .toc a{border:1px solid var(--line);border-radius:4px;padding:9px 11px;color:var(--ink)}
+    blockquote{margin:16px 0;padding:14px 18px;border-left:4px solid var(--blue);background:#f3f9fd;font-size:1rem}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .card{border:1px solid var(--line);border-radius:5px;padding:15px}
+    .card h3{margin:0 0 7px}
+    .card p{color:var(--muted);font-size:.9rem}
+    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:5px}
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+    th{background:var(--soft);font-weight:600}
+    tr:last-child td{border-bottom:0}
+    .status{font-weight:600;color:var(--green)}
+    .tree,pre{background:#201f1e;color:#f3f2f1;border-radius:5px;padding:15px;overflow:auto;font-size:.82rem;line-height:1.55}
+    .flow{border:1px solid var(--line);border-radius:6px;padding:12px;background:#fbfbfb}
+    .decisions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .decision{border-left:4px solid var(--blue);background:#f8fbfe;padding:14px 16px}
+    .decision b{display:block;margin-bottom:5px}
+    .code-inventory{margin-bottom:18px}
+    .code-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+    .code-card{background:#fff;border:1px solid #edebe9;border-radius:5px;overflow:hidden}
+    .code-card h4{margin:0;padding:10px 14px;font-size:.88rem;color:#fff}
+    .code-card.before h4{background:#a4262c}.code-card.after h4{background:#107c10}
+    .code-card .note{padding:10px 14px;color:#605e5c;font-size:.82rem;border-bottom:1px solid #edebe9}
+    .code-card pre{margin:0;border:0;border-radius:0;position:relative}
+    .line{display:block;margin:0 -16px;padding:0 16px;white-space:pre}
+    .line.del{background:rgba(197,15,31,.32);border-left:4px solid #c50f1f}
+    .line.add{background:rgba(16,124,16,.30);border-left:4px solid #107c10}
+    .line.keep{border-left:4px solid transparent}
+    .line.focus{background:rgba(0,120,212,.22);border-left:4px solid #0078d4}
+    .copy{float:right;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:3px;padding:2px 7px;cursor:pointer;font-size:.72rem}
+    .risk{border-left:4px solid #d83b01;background:#fff4ce;padding:12px 15px;margin:9px 0}
+    .ok{border-left:4px solid var(--green);background:#f1faee;padding:12px 15px;margin:9px 0}
+    footer{max-width:1260px;margin:0 auto;padding:0 24px 40px;color:var(--muted);font-size:.82rem}
+    @media(max-width:1000px){.shell{grid-template-columns:1fr}.side-nav{display:none}.stat-row{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:1fr 1fr}}
+    @media(max-width:900px){.code-compare{grid-template-columns:1fr}}
+    @media(max-width:620px){header{padding:26px 18px}.shell{padding:18px 12px}.stat-row,.cards,.decisions,.toc{grid-template-columns:1fr 1fr}section{padding:18px}}
+    @media print{.banner,.side-nav,.copy{display:none}.shell{display:block;padding:0}section{box-shadow:none;break-inside:avoid}body{background:#fff}}
+  </style>
+</head>
+<body>
+  <div class="banner">RAMIFY ENGINEERING REVIEW | LOCAL QA EVIDENCE</div>
+  <header>
+    <h1>Design-1 Chess Piece Integration</h1>
+    <p>Review artifact for replacing the active board sprite with Ragnar's twelve owner-provided Design-1 renders, preserving transparent edges and contact shadows, and proving that play, engine response, mobile layout and deploy packaging remain intact.</p>
+    <div class="pills">
+      <span class="pill">Product: Ramify</span>
+      <span class="pill">Scope: board artwork and visual depth</span>
+      <span class="pill">Source: Resources/Design-1</span>
+      <span class="pill good">Status: locally verified</span>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="side-nav" aria-label="Report sections">
+      <strong>Contents</strong>
+      <a href="#sec-1">1. Outcome</a>
+      <a href="#sec-2">2. Architecture</a>
+      <a href="#sec-3">3. Inventory</a>
+      <a href="#sec-4">4. Code changes</a>
+      <a href="#sec-5">5. Verification</a>
+      <a href="#sec-6">6. Decisions</a>
+      <a href="#sec-7">7. Risks</a>
+      <a href="#sec-8">8. Runbook</a>
+    </nav>
+
+    <main>
+      <section id="sec-1">
+        <h2>1. Outcome</h2>
+        <div class="stat-row">
+          <div class="stat"><b>12</b><span>source renders</span></div>
+          <div class="stat"><b>12</b><span>transparent sprite tiles</span></div>
+          <div class="stat"><b>180</b><span>unit checks passed</span></div>
+          <div class="stat"><b>52/52</b><span>browser checks passed</span></div>
+          <div class="stat"><b>0</b><span>console or request failures</span></div>
+        </div>
+        <blockquote>
+          The source PNGs remain the durable authoring record. A deterministic Python tool owns background removal, alpha unmatting, scale normalization and sprite generation. The browser consumes only the generated cm-chessboard sprite, while local unit, build and real-browser gates protect the contract.
+        </blockquote>
+        <div class="toc">
+          <a href="#sec-2">How the authoring and runtime boundaries connect</a>
+          <a href="#sec-4">Before and after implementation evidence</a>
+          <a href="#sec-5">Test, build and visual QA receipts</a>
+          <a href="#sec-7">Known constraints and mitigations</a>
+        </div>
+        <div class="ok"><b>Result:</b> Design-1 is active on the board, all pieces are draggable, Stockfish returns control to White after its reply, and the board fits a 390px viewport without horizontal overflow.</div>
+      </section>
+
+      <section id="sec-2">
+        <h2>2. Runtime and authoring architecture</h2>
+        <div class="flow">
+          <svg viewBox="0 0 920 245" role="img" aria-labelledby="flow-title flow-desc" width="100%">
+            <title id="flow-title">Design-1 asset pipeline</title>
+            <desc id="flow-desc">Twelve owner-provided PNGs flow through background fitting, alpha unmatting and normalization into a generated SVG sprite consumed by cm-chessboard and verified by local QA.</desc>
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#0078d4"/>
+              </marker>
+            </defs>
+            <g font-family="Segoe UI, Arial" font-size="14">
+              <rect x="18" y="70" width="155" height="95" rx="8" fill="#fff" stroke="#8a8886"/>
+              <text x="95" y="98" text-anchor="middle" font-weight="600">Source of truth</text>
+              <text x="95" y="121" text-anchor="middle">12 x 816px PNG</text>
+              <text x="95" y="143" text-anchor="middle" fill="#605e5c">Resources/Design-1</text>
+
+              <rect x="225" y="42" width="205" height="150" rx="8" fill="#f3f9fd" stroke="#0078d4"/>
+              <text x="327" y="72" text-anchor="middle" font-weight="600">Authoring control plane</text>
+              <text x="327" y="99" text-anchor="middle">quadratic background fit</text>
+              <text x="327" y="122" text-anchor="middle">alpha edge unmatting</text>
+              <text x="327" y="145" text-anchor="middle">type-specific normalization</text>
+              <text x="327" y="168" text-anchor="middle" fill="#605e5c">build-design1-sprite.py</text>
+
+              <rect x="483" y="70" width="170" height="95" rx="8" fill="#fff" stroke="#8a8886"/>
+              <text x="568" y="98" text-anchor="middle" font-weight="600">Deployable artifact</text>
+              <text x="568" y="121" text-anchor="middle">40 x 40 SVG contract</text>
+              <text x="568" y="143" text-anchor="middle" fill="#605e5c">12 embedded PNG tiles</text>
+
+              <rect x="705" y="42" width="195" height="150" rx="8" fill="#f1faee" stroke="#107c10"/>
+              <text x="802" y="72" text-anchor="middle" font-weight="600">Runtime and proof</text>
+              <text x="802" y="99" text-anchor="middle">cm-chessboard render</text>
+              <text x="802" y="122" text-anchor="middle">real pointer drag</text>
+              <text x="802" y="145" text-anchor="middle">Stockfish reply</text>
+              <text x="802" y="168" text-anchor="middle" fill="#605e5c">unit + build + browser QA</text>
+
+              <line x1="173" y1="117" x2="217" y2="117" stroke="#0078d4" stroke-width="3" marker-end="url(#arrow)"/>
+              <line x1="430" y1="117" x2="475" y2="117" stroke="#0078d4" stroke-width="3" marker-end="url(#arrow)"/>
+              <line x1="653" y1="117" x2="697" y2="117" stroke="#0078d4" stroke-width="3" marker-end="url(#arrow)"/>
+            </g>
+          </svg>
+        </div>
+        <div class="cards">
+          <div class="card"><h3>Durable source</h3><p>The twelve original 816 x 816 RGB PNGs remain unchanged except for normalized filenames. Grey studio backgrounds are intentionally retained.</p></div>
+          <div class="card"><h3>Generated data plane</h3><p><code>design-1.svg</code> embeds twelve 256 x 256 transparent tiles under the exact IDs cm-chessboard expects.</p></div>
+          <div class="card"><h3>Runtime boundary</h3><p>The browser does no image processing. It fetches one sprite, instantiates pieces with SVG <code>use</code> elements and delegates legal input to the existing board controller.</p></div>
+        </div>
+      </section>
+
+      <section id="sec-3">
+        <h2>3. Change inventory</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Surface</th><th>Artifacts</th><th>Ownership</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>Source artwork</td><td><code>Resources/Design-1/*.png</code></td><td>Owner-provided source of truth</td><td>12 normalized filenames, each 816 x 816</td></tr>
+              <tr><td>Authoring tool</td><td><code>scripts/build-design1-sprite.py</code></td><td>Deterministic transformation</td><td>Grey removal, edge unmatting, contact-shadow retention and sizing</td></tr>
+              <tr><td>Runtime sprite</td><td><code>public/assets/pieces/design-1.svg</code></td><td>Generated deploy artifact</td><td>545,681 bytes, 12 required groups</td></tr>
+              <tr><td>Board selection</td><td><code>public/js/board.js</code></td><td>Runtime configuration</td><td>Design-1 replaces faceted as active set</td></tr>
+              <tr><td>Visual depth</td><td><code>public/css/styles.css</code></td><td>Presentation layer</td><td>Board shell, card and control borders/shadows</td></tr>
+              <tr><td>Quality gates</td><td><code>scripts/pieces.test.js</code>, <code>scripts/smoke.mjs</code>, <code>scripts/build-static.mjs</code></td><td>Local trust-but-verify loop</td><td>Source, sprite, build, drag, engine and responsive checks</td></tr>
+              <tr><td>Provenance</td><td><code>docs/*</code>, piece READMEs</td><td>Review and licensing record</td><td>Owner-provided AI-assisted origin documented without unsupported claims</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre class="tree"><code>Resources/Design-1/
+|-- wk.png wq.png wr.png wb.png wn.png wp.png
+|-- bk.png bq.png br.png bb.png bn.png bp.png
+`-- README.md
+
+scripts/
+|-- build-design1-sprite.py
+|-- pieces.test.js
+`-- smoke.mjs
+
+public/assets/pieces/
+|-- design-1.svg        [active]
+|-- faceted.svg         [retained vector fallback]
+`-- silhouette.svg      [retained icon-style fallback]</code></pre>
+      </section>
+
+      <section id="sec-4">
+        <h2>4. Code changes: before and after</h2>
+        <div class="table-wrap code-inventory">
+          <table>
+            <thead><tr><th>File</th><th>Logical change</th><th>Review focus</th></tr></thead>
+            <tbody>
+              <tr><td><code>public/js/board.js</code></td><td>Switch active sprite</td><td>Import-relative URL remains subpath safe</td></tr>
+              <tr><td><code>public/css/styles.css</code></td><td>Add board and control depth</td><td>Desktop width remains 620px; mobile remains overflow-free</td></tr>
+              <tr><td><code>scripts/build-static.mjs</code></td><td>Validate active asset and built selector</td><td>Deploy artifact cannot silently fall back</td></tr>
+              <tr><td><code>scripts/smoke.mjs</code></td><td>Replace API-only move with real drag</td><td>Input restores after the engine reply</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>4.1 Active piece sprite</h3>
+        <div class="code-compare">
+          <div class="code-card before">
+            <h4>Before: hand-authored fallback active <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>public/js/board.js</code> - the board used <code>faceted.svg</code>.</div>
+            <pre><code><span class="line keep">animationDuration: 200,</span>
+<span class="line del">pieces: { file: new URL('../assets/pieces/faceted.svg', import.meta.url).href },</span>
+<span class="line keep">extensions: [</span></code></pre>
+          </div>
+          <div class="code-card after">
+            <h4>After: selected Design-1 active <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>public/js/board.js</code> - the owner-selected generated sprite is active.</div>
+            <pre><code><span class="line keep">animationDuration: 200,</span>
+<span class="line add">pieces: { file: new URL('../assets/pieces/design-1.svg', import.meta.url).href },</span>
+<span class="line keep">extensions: [</span></code></pre>
+          </div>
+        </div>
+
+        <h3>4.2 Board sizing and visual depth</h3>
+        <div class="code-compare">
+          <div class="code-card before">
+            <h4>Before: flat, unconstrained shell <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>public/css/styles.css</code> - board had no surface boundary or reserved square.</div>
+            <pre><code><span class="line del">.board-wrap { display: flex; gap: var(--space-2); align-items: stretch; }</span>
+<span class="line del">.board { flex: 1; min-width: 0; max-width: 620px; }</span></code></pre>
+          </div>
+          <div class="code-card after">
+            <h4>After: bounded board surface <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>public/css/styles.css</code> - a 662px shell reserves a 620px square board plus evaluation bar.</div>
+            <pre><code><span class="line add">.board-wrap {</span>
+<span class="line add">  width: min(100%, 662px); padding: var(--space-2);</span>
+<span class="line add">  border: 1px solid var(--line);</span>
+<span class="line add">  box-shadow: var(--shadow-sm);</span>
+<span class="line add">}</span>
+<span class="line add">.board { flex: 1; max-width: 620px; aspect-ratio: 1; }</span></code></pre>
+          </div>
+        </div>
+
+        <h3>4.3 Production build guard</h3>
+        <div class="code-compare">
+          <div class="code-card before">
+            <h4>Before: only legacy sprite presence checked <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>scripts/build-static.mjs</code> - build did not prove that board code selected the checked asset.</div>
+            <pre><code><span class="line del">const piecesSprite = path.join(DIST_DIR, 'assets', 'pieces', 'faceted.svg');</span>
+<span class="line del">check('original faceted piece sprite present', existsSync(piecesSprite));</span></code></pre>
+          </div>
+          <div class="code-card after">
+            <h4>After: artifact and selector both checked <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>scripts/build-static.mjs</code> - presence and active runtime wiring are separate gates.</div>
+            <pre><code><span class="line add">const piecesSprite = path.join(DIST_DIR, 'assets', 'pieces', 'design-1.svg');</span>
+<span class="line add">check('active Design-1 piece sprite present', existsSync(piecesSprite));</span>
+<span class="line add">const boardUsesDesign1 = (await fsp.readFile(builtBoardSource, 'utf8'))</span>
+<span class="line add">  .includes('assets/pieces/design-1.svg');</span>
+<span class="line add">check('built board selects the Design-1 piece sprite', boardUsesDesign1);</span></code></pre>
+          </div>
+        </div>
+
+        <h3>4.4 Browser behavior proof</h3>
+        <div class="code-compare">
+          <div class="code-card before">
+            <h4>Before: test bypassed pointer interaction <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>scripts/smoke.mjs</code> - SAN API acceptance did not prove pieces could be dragged.</div>
+            <pre><code><span class="line del">const accepted = await cdp.eval(</span>
+<span class="line del">  () =&gt; window.chessCoach.playSan('e4')</span>
+<span class="line del">)</span></code></pre>
+          </div>
+          <div class="code-card after">
+            <h4>After: real e2-e4 pointer sequence <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>scripts/smoke.mjs</code> - the move is centered in any viewport, then mouse down, movement and release exercise the rendered piece.</div>
+            <pre><code><span class="line add">e3Square.scrollIntoView({ block: 'center' })</span>
+<span class="line add">await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...drag.from })</span>
+<span class="line add">for (let step = 1; step &lt;= 6; step += 1) {</span>
+<span class="line add">  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point })</span>
+<span class="line add">}</span>
+<span class="line add">await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...drag.to })</span>
+<span class="line focus">record('real board drag accepts e2-e4', playerHistory[0] === 'e4')</span></code></pre>
+          </div>
+        </div>
+
+        <h3>4.5 Reproducible asset authoring and contracts</h3>
+        <div class="code-compare">
+          <div class="code-card before">
+            <h4>Before: no source-to-sprite pipeline <button class="copy" type="button">Copy</button></h4>
+            <div class="note">The generated artwork could not be rebuilt or contract-checked from committed sources.</div>
+            <pre><code><span class="line del"># No deterministic background-removal or normalization tool.</span>
+<span class="line del">// No tests for source names, source dimensions or embedded tile dimensions.</span></code></pre>
+          </div>
+          <div class="code-card after">
+            <h4>After: generator and permanent tests <button class="copy" type="button">Copy</button></h4>
+            <div class="note"><code>scripts/build-design1-sprite.py</code> and <code>scripts/pieces.test.js</code> own reproducibility.</div>
+            <pre><code><span class="line add">background = estimate_background(rgb)</span>
+<span class="line add">alpha = smooth_ramp(distance(rgb, background))</span>
+<span class="line add">tile = place_on_tile(remove_background(source), piece_type)</span>
+<span class="line add">assert.equal(images.length, 12)</span>
+<span class="line add">assert.equal(png.readUInt32BE(16), 256)</span></code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-5">
+        <h2>5. Verification evidence</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Gate</th><th>Command or probe</th><th>Measured result</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Unit and contract suite</td><td><code>npm test</code></td><td>180 passed, 0 failed</td><td class="status">PASS</td></tr>
+              <tr><td>Static production build</td><td><code>npm run build</code></td><td>73 files, 8.9 MB; active sprite 533 KB</td><td class="status">PASS</td></tr>
+              <tr><td>Build artifact check</td><td><code>npm run build:check</code></td><td>Design-1 present and selected; no NonCommercial asset deployed</td><td class="status">PASS</td></tr>
+              <tr><td>Real-browser loop</td><td><code>npm run test:e2e</code></td><td>52/52, including real e2-e4 drag and input restoration</td><td class="status">PASS</td></tr>
+              <tr><td>Deterministic generation</td><td>SHA-256 before and after rebuild</td><td><code>d6f50812...ff635e</code> unchanged</td><td class="status">PASS</td></tr>
+              <tr><td>Desktop visual QA</td><td>1440 x 1000 local Chrome</td><td>662px shell, 620px board, LCP 2252ms, CLS 0</td><td class="status">PASS</td></tr>
+              <tr><td>Mobile visual QA</td><td>390 x 844 local Chrome</td><td>358px shell, no overflow, LCP 44ms, CLS 0.0014</td><td class="status">PASS</td></tr>
+              <tr><td>Browser noise</td><td>Console and failed-request capture</td><td>0 errors, 0 failed requests</td><td class="status">PASS</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><b>Visual acceptance:</b> every piece remains recognizable at desktop and mobile board sizes. Neutral board squares remain visible through transparent tile backgrounds. Source contact shadows remain compact and do not bleed into neighboring squares.</p>
+      </section>
+
+      <section id="sec-6">
+        <h2>6. Key decisions</h2>
+        <div class="decisions">
+          <div class="decision"><b>Keep the original grey-background PNGs.</b>The source files are the durable authoring record. Fake transparency is not requested from the image model; removal is deterministic and reviewable in code.</div>
+          <div class="decision"><b>Embed raster tiles inside the SVG sprite contract.</b>This preserves cm-chessboard's required group IDs and drag behavior without converting detailed sculpted artwork into lossy hand-traced paths.</div>
+          <div class="decision"><b>Retain vector alternatives.</b><code>faceted.svg</code> and <code>silhouette.svg</code> remain available as project-authored fallbacks; Design-1 is only the active selection.</div>
+          <div class="decision"><b>Keep all QA local.</b>No GitHub Actions test workflow is introduced. Unit, build and browser gates run through the existing local npm commands.</div>
+        </div>
+      </section>
+
+      <section id="sec-7">
+        <h2>7. Risks and mitigations</h2>
+        <div class="risk"><b>Raster sprite weight:</b> the generated sprite is approximately 533 KB. Mitigation: each tile is downsampled to 256 x 256, build size limits remain active, and the sprite is fetched once.</div>
+        <div class="risk"><b>AI-assisted artwork provenance:</b> legal treatment of AI-assisted output can vary by jurisdiction. Mitigation: documentation states only supported facts: owner direction, owner provision, selected tool and no intentionally supplied third-party chess asset. The record explicitly avoids giving a legal opinion.</div>
+        <div class="risk"><b>Source background assumptions:</b> the fitter is tuned to the selected neutral studio renders. Mitigation: exact dimensions and filename contracts are tested; materially different future source styles should receive a new generator profile rather than weakening current thresholds.</div>
+        <div class="risk"><b>Mobile board area:</b> the evaluation bar and bordered shell reduce the inner board to roughly 322px at 390px viewport width. Mitigation: visual QA confirms legibility and no overflow; the shell uses a reduced 6px mobile padding.</div>
+      </section>
+
+      <section id="sec-8">
+        <h2>8. Operational runbook</h2>
+        <p>Use this sequence after replacing any source render:</p>
+        <pre><code>python3 scripts/build-design1-sprite.py
+npm test
+npm run build
+npm run build:check
+npm run test:e2e</code></pre>
+        <p>The expected source contract is exactly twelve PNG files named <code>wk wq wr wb wn wp bk bq br bb bn bp</code>, each 816 x 816. A successful run must leave <code>design-1.svg</code> deterministic, keep the build free of NonCommercial assets and pass a real board drag.</p>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <p>Generated 2026-08-19 from the local Ramify repository and local browser evidence. Audience: product owner and code reviewer.</p>
+    <p>Reviewed by Ragnar 19-08-26-09-48 [ ] Comments from Ragnar:<br>Assisted by Ragnar's Agent.</p>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.copy').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const text = button.closest('.code-card').querySelector('pre').innerText
+        await navigator.clipboard.writeText(text)
+        const prior = button.textContent
+        button.textContent = 'Copied'
+        setTimeout(() => { button.textContent = prior }, 1200)
+      })
+    })
+  </script>
+</body>
+</html>

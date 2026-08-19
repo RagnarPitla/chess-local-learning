@@ -66,10 +66,10 @@ const CM_CHESSBOARD_SUBDIRS = ['src', 'assets'];
 // cm-chessboard bundles several piece sets under different licences. Its
 // staunty.svg set is CC BY-NC-SA 4.0 - a NonCommercial licence, which cannot
 // ship inside an MIT-licensed artifact that may be used commercially. The
-// board renders this project's own faceted set from public/assets/pieces/, so
-// no bundled set is needed at runtime. standard.svg (CC BY-SA 3.0) is kept
-// because it is the library's own documented default and is commercially
-// redistributable with attribution (see docs/CREDITS.md).
+// board renders this project's owner-provided Design-1 set from
+// public/assets/pieces/, so no bundled set is needed at runtime. standard.svg
+// (CC BY-SA 3.0) is kept because it is the library's own documented default
+// and is commercially redistributable with attribution (see docs/CREDITS.md).
 const EXCLUDED_VENDOR_SUFFIXES = [
   path.join('assets', 'pieces', 'staunty.svg'),
 ];
@@ -614,8 +614,13 @@ async function runCheck({ base }) {
     nonCommercial.map((f) => path.relative(DIST_DIR, f)).join(', '),
   );
 
-  const piecesSprite = path.join(DIST_DIR, 'assets', 'pieces', 'faceted.svg');
-  check('original faceted piece sprite present', existsSync(piecesSprite));
+  const piecesSprite = path.join(DIST_DIR, 'assets', 'pieces', 'design-1.svg');
+  check('active Design-1 piece sprite present', existsSync(piecesSprite));
+
+  const builtBoardSource = path.join(DIST_DIR, 'js', 'board.js');
+  const boardUsesDesign1 = existsSync(builtBoardSource)
+    && (await fsp.readFile(builtBoardSource, 'utf8')).includes('assets/pieces/design-1.svg');
+  check('built board selects the Design-1 piece sprite', boardUsesDesign1);
 
   console.log('');
   if (problems.length === 0) {

@@ -398,10 +398,11 @@ with slightly more separation on white pieces so they remain visible on
 there is no coloured shadow, glow or gradient, and the 390px layout is
 measured to stay within the viewport.
 
-The next piece set should be generated from
-`docs/CHESS-PIECE-RENDER-BRIEF.md`. It preserves the 40 x 40 sprite contract
-while adding explicit contour and contact-shadow requirements to the source
-art.
+Design-1 follows the contour, naming and contact-shadow direction recorded in
+`docs/CHESS-PIECE-RENDER-BRIEF.md`. The delivered source renders are 816 x
+816; the brief's 2048 x 2048 target remains the specification for any future
+higher-resolution regeneration. Both paths preserve the same 40 x 40 runtime
+sprite contract.
 
 The same ladder extends to the new `pgr-mastery-tile` component
 (`progress.js`'s pattern-mastery grid): unseen is faded/muted, weak is a
@@ -584,18 +585,17 @@ global ring reaches every focusable element, including those two.
 - **Visual references**: the owner supplied two reference directions.
   The winning direction - faceted, low-poly, sculptural chess pieces in
   white and charcoal on a clean board, with soft grey shadows - informed
-  the monochrome board treatment in this document (section 6.4) and was
-  realised as this project's own artwork at
-  `public/assets/pieces/faceted.svg`. The secondary reference - bold,
+  the monochrome board treatment in this document (section 6.4). It is now
+  realised by the owner-selected Design-1 source renders and the active
+  `public/assets/pieces/design-1.svg` sprite. The first hand-authored
+  implementation remains available at `public/assets/pieces/faceted.svg`.
+  The secondary reference - bold,
   solid-black woodcut-style piece silhouettes for icons and marks - is
-  realised at `public/assets/pieces/silhouette.svg`. Both are original
-  work produced for this project (hand-authored SVG polygon paths, not
-  traced or copied from any third-party asset); see
+  realised at `public/assets/pieces/silhouette.svg`. The vector sets are
+  original hand-authored work produced for this project; Design-1 is
+  owner-directed, owner-provided AI-assisted artwork. See
   `public/assets/pieces/README.md` and `docs/CREDITS.md` for the full
-  authorship and licence record. This document does not restate that
-  ledger, only confirms it: every piece of artwork referenced by the
-  design system described here is originally authored for this project,
-  not copied from elsewhere.
+  provenance and licence record.
 - **Rejected references**: glowing blue AI wireframes, glass pieces, and
   blue-and-orange painterly art were supplied as contrast/rejected
   examples by the owner and are recorded here only as the "do not do

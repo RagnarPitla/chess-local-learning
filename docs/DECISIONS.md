@@ -69,10 +69,12 @@ root-document selection in `server.js`, and point `APP_URL` in
 
 ---
 
-## 3. The board renders original artwork, not the bundled piece set
+## 3. The board renders project-selected artwork, not the bundled piece set
 
-**Decided:** `public/js/board.js` renders this repository's own
-`public/assets/pieces/faceted.svg`, released under this project's MIT licence.
+**Decided:** `public/js/board.js` renders this repository's selected
+`public/assets/pieces/design-1.svg`. It is built from owner-directed,
+owner-provided source renders in `Resources/Design-1` and included with the
+owner's approval for this MIT-licensed project.
 
 **Why:** cm-chessboard's bundled `staunty.svg` is licensed **CC BY-NC-SA 4.0**.
 The NonCommercial term is incompatible with an MIT project intended to support
@@ -92,12 +94,17 @@ provides, and it is cm-chessboard's own documented default - removing it risks
 breaking a fallback path inside the library.
 
 **Detail worth keeping:** the sprite is referenced as
-`new URL('../assets/pieces/faceted.svg', import.meta.url).href` rather than a
-root-absolute `/assets/pieces/faceted.svg`. cm-chessboard uses a path verbatim
+`new URL('../assets/pieces/design-1.svg', import.meta.url).href` rather than a
+root-absolute `/assets/pieces/design-1.svg`. cm-chessboard uses a path verbatim
 when it is absolute and otherwise joins it to `assetsUrl`; resolving against
 `import.meta.url` produces a fully-qualified URL that also survives a sub-path
 deploy such as `https://user.github.io/repo-name/`, where a root-absolute path
 would 404.
+
+**Previous set retained:** `faceted.svg` remains available as the original
+hand-authored vector fallback. Design-1 replaces it on the live board because
+the selected sculpted silhouettes, contours and contact shadows remain clearer
+at the board's real 45-70px render sizes.
 
 ---
 
